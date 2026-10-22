@@ -68,6 +68,8 @@ cmake --build SDL_mixer/build -j && cmake --install SDL_mixer/build
 
 Then build with `make -f Makefile.linux` (or `CONFIG=debug`). The executable is `build/linux/<config>/u5linux`; run it from the directory containing the original game data files.
 
+Every push is built for Linux (SDL3 3.4.8 and SDL3_mixer 3.2.0, built from source as above) and Windows by GitHub Actions; see `.github/workflows/ci.yml`.
+
 ### Settings
 
 Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound and Gameplay pages, and Esc saves and returns. Display and sound changes apply immediately.

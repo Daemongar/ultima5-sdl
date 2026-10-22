@@ -1,0 +1,90 @@
+name: Build
+
+# Compiles the game for Linux and Windows on every push and pull request, so
+# a change that breaks either platform shows up before a release is cut. The
+# installer itself is built by release.yml.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    env:
+      # The versions the Windows build gets from vcpkg.
+      SDL_VERSION: "3.4.8"
+      SDL_MIXER_VERSION: "3.2.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools and SDL's system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev \
+            libdbus-1-dev libudev-dev
+
+      # Ubuntu doesn't package SDL3 yet, so build it as the README describes
+      # and keep the result for later runs.
+      - name: Restore SDL3 and SDL3_mixer
+        id: sdl-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: sdl-${{ runner.os }}-ubuntu-24.04-${{ env.SDL_VERSION }}-mixer-${{ env.SDL_MIXER_VERSION }}
+
+      - name: Build SDL3 and SDL3_mixer
+        if: steps.sdl-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch "release-$SDL_VERSION" https://github.com/libsdl-org/SDL.git /tmp/SDL
+          cmake -S /tmp/SDL -B /tmp/SDL/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$HOME/.local" -DCMAKE_INSTALL_LIBDIR=lib \
+            -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
+          cmake --build /tmp/SDL/build
+          cmake --install /tmp/SDL/build
+
+          git clone --depth 1 --branch "release-$SDL_MIXER_VERSION" https://github.com/libsdl-org/SDL_mixer.git /tmp/SDL_mixer
+          cmake -S /tmp/SDL_mixer -B /tmp/SDL_mixer/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$HOME/.local" -DCMAKE_INSTALL_LIBDIR=lib \
+            -DCMAKE_PREFIX_PATH="$HOME/.local" -DSDLMIXER_VENDORED=OFF \
+            -DSDLMIXER_TESTS=OFF -DSDLMIXER_EXAMPLES=OFF
+          cmake --build /tmp/SDL_mixer/build
+          cmake --install /tmp/SDL_mixer/build
+
+      - name: Build the game
+        run: make -f Makefile.linux -j"$(nproc)"
+
+      - name: Check the executable links
+        run: |
+          LD_LIBRARY_PATH="$HOME/.local/lib" ldd build/linux/release/u5linux
+          if LD_LIBRARY_PATH="$HOME/.local/lib" ldd build/linux/release/u5linux | grep -q "not found"; then
+            echo "u5linux has unresolved libraries"
+            exit 1
+          fi
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Integrate vcpkg with MSBuild
+        shell: pwsh
+        run: |
+          $vcpkg = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "vcpkg.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $vcpkg) { throw "Could not find the Visual Studio-bundled vcpkg.exe" }
+          & $vcpkg.FullName integrate install
+
+      - name: Build Release x64
+        run: msbuild u5win\u5win.slnx /p:Configuration=Release /p:Platform=x64 /m
