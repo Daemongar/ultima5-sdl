@@ -122,6 +122,9 @@
     <ClCompile Include="..\src\journal.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\automap.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\map_name.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -356,6 +359,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\journal.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\automap.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\map_name.h">

@@ -5,6 +5,7 @@
 #include "vars.h"
 
 #include "options_menu.h"
+#include "automap.h"
 #include "journal.h"
 #include "map_name.h"
 #include "save_slots.h"
@@ -384,9 +385,9 @@ static char* s_otherKeys[] =
     "Ctrl+B Key buffer", "Ctrl+V Version",
     "Ctrl+E Exit game",  "F1     Options",
     "F2     This page",  "F3     Spells",
-    "F4     Journal",    "F8     Reload BMP",
+    "F4     Journal",    "F10    Map",
     "F5     Quicksave",  "F9     Quickload",
-    "F6/F7  Save/load",
+    "F6/F7  Save/load",  "F8     Reload BMP",
 };
 
 #define SHORTCUT_LEFT_COLUMN 3
@@ -1069,6 +1070,292 @@ static void ShowJournal(void)
 
 #endif
 
+#if defined(ENABLE_AUTOMAP)
+
+// Dungeon map screen (F10): one level of the current dungeon as an 8x8 grid
+// of the cells the party has seen, drawn from the dungeon as it is now.
+#define AUTOMAP_CELL 16
+#define AUTOMAP_X 24
+#define AUTOMAP_Y 24
+#define AUTOMAP_LEGEND_X 168
+#define AUTOMAP_LEGEND_TEXT_COLUMN 23
+#define AUTOMAP_LEGEND_FIRST_ROW 3
+
+// EGA colors.
+#define EGA_BLACK 0
+#define EGA_BROWN 6
+#define EGA_LIGHT_GRAY 7
+#define EGA_DARK_GRAY 8
+#define EGA_LIGHT_BLUE 9
+#define EGA_LIGHT_GREEN 10
+#define EGA_LIGHT_RED 12
+#define EGA_LIGHT_MAGENTA 13
+#define EGA_YELLOW 14
+#define EGA_WHITE 15
+
+enum
+{
+    SYMBOL_NONE,
+    SYMBOL_UP_LADDER,
+    SYMBOL_DOWN_LADDER,
+    SYMBOL_LADDER,
+    SYMBOL_CHEST,
+    SYMBOL_FOUNTAIN,
+    SYMBOL_PIT,
+    SYMBOL_FIELD,
+    SYMBOL_DOOR,
+};
+
+static char* s_symbolNames[] =
+{
+    "", "Up ladder", "Down ladder", "Up & down", "Chest", "Fountain", "Pit", "Field", "Door",
+};
+
+// Cell types are the high nibble (see DNGLOOK's Look descriptions). Special
+// walls (0xc0) hide secret doors, so they are drawn as walls.
+static bool CellIsWall(int cell)
+{
+    cell &= 0xf0;
+    return cell == 0xb0 || cell == 0xc0 || cell == 0xd0;
+}
+
+static int CellSymbol(int cell)
+{
+    switch (cell & 0xf0)
+    {
+    case 0x10: return SYMBOL_UP_LADDER;
+    case 0x20: return SYMBOL_DOWN_LADDER;
+    case 0x30: return SYMBOL_LADDER;
+    case 0x40: return SYMBOL_CHEST;
+    case 0x50: return SYMBOL_FOUNTAIN;
+    case 0x60: return SYMBOL_PIT;
+    case 0x80: return SYMBOL_FIELD;
+    case 0xa0:
+    case 0xe0:
+    case 0xf0: return SYMBOL_DOOR;
+    default: return SYMBOL_NONE; // passages, opened chests, "nothing of note"
+    }
+}
+
+static void FillBox(int color, int x1, int y1, int x2, int y2)
+{
+    ULTIMA_0a70_GRAP_2d_SetPenColor(color);
+    ULTIMA_0aa6_GRAP_3f_FillRect(x1, y1, x2, y2);
+}
+
+static void Line(int color, int x1, int y1, int x2, int y2)
+{
+    ULTIMA_0a70_GRAP_2d_SetPenColor(color);
+    ULTIMA_0b10_GRAP_Line(x1, y1, x2, y2);
+}
+
+// An arrow in the 8x8 box at x, y, pointing up (0), right, down or left (3).
+static void DrawArrow(int color, int x, int y, int direction)
+{
+    switch (direction)
+    {
+    case 0:
+        Line(color, x + 3, y, x + 3, y + 7);
+        Line(color, x + 4, y, x + 4, y + 7);
+        Line(color, x, y + 3, x + 3, y);
+        Line(color, x + 7, y + 3, x + 4, y);
+        break;
+    case 1:
+        Line(color, x, y + 3, x + 7, y + 3);
+        Line(color, x, y + 4, x + 7, y + 4);
+        Line(color, x + 4, y, x + 7, y + 3);
+        Line(color, x + 4, y + 7, x + 7, y + 4);
+        break;
+    case 2:
+        Line(color, x + 3, y, x + 3, y + 7);
+        Line(color, x + 4, y, x + 4, y + 7);
+        Line(color, x, y + 4, x + 3, y + 7);
+        Line(color, x + 7, y + 4, x + 4, y + 7);
+        break;
+    default:
+        Line(color, x, y + 3, x + 7, y + 3);
+        Line(color, x, y + 4, x + 7, y + 4);
+        Line(color, x + 3, y, x, y + 3);
+        Line(color, x + 3, y + 7, x, y + 4);
+        break;
+    }
+}
+
+// A symbol in the 8x8 box at x, y.
+static void DrawSymbol(int symbol, int x, int y)
+{
+    switch (symbol)
+    {
+    case SYMBOL_UP_LADDER:
+        DrawArrow(EGA_LIGHT_GREEN, x, y, 0);
+        break;
+    case SYMBOL_DOWN_LADDER:
+        DrawArrow(EGA_LIGHT_RED, x, y, 2);
+        break;
+    case SYMBOL_LADDER:
+        Line(EGA_YELLOW, x + 3, y, x + 3, y + 7);
+        Line(EGA_YELLOW, x + 4, y, x + 4, y + 7);
+        Line(EGA_YELLOW, x + 1, y + 2, x + 3, y);
+        Line(EGA_YELLOW, x + 6, y + 2, x + 4, y);
+        Line(EGA_YELLOW, x + 1, y + 5, x + 3, y + 7);
+        Line(EGA_YELLOW, x + 6, y + 5, x + 4, y + 7);
+        break;
+    case SYMBOL_CHEST:
+        FillBox(EGA_YELLOW, x + 1, y + 2, x + 6, y + 6);
+        Line(EGA_BROWN, x + 1, y + 4, x + 6, y + 4);
+        break;
+    case SYMBOL_FOUNTAIN:
+        FillBox(EGA_LIGHT_BLUE, x + 1, y + 1, x + 6, y + 6);
+        break;
+    case SYMBOL_PIT:
+        // A black hole, outlined so it shows on black too.
+        FillBox(EGA_LIGHT_GRAY, x, y, x + 7, y + 7);
+        FillBox(EGA_BLACK, x + 1, y + 1, x + 6, y + 6);
+        break;
+    case SYMBOL_FIELD:
+        FillBox(EGA_LIGHT_MAGENTA, x + 1, y + 1, x + 6, y + 6);
+        break;
+    case SYMBOL_DOOR:
+        FillBox(EGA_BROWN, x, y + 1, x + 7, y + 6);
+        break;
+    }
+}
+
+static void DrawAutomapLevel(int dungeon, int level)
+{
+    char text[40];
+
+    // Title and the grid area, cleared.
+    ULTIMA_1bf2_SetTextPosition(1, 1);
+    PrintPadded("", SCREEN_RIGHT - 1);
+    sprintf(text, "%s - Level %d", MAP_GetName(dungeon + 0x21, 0), level + 1);
+    PrintCentered(1, text);
+    FillBox(EGA_BLACK, AUTOMAP_X - 1, AUTOMAP_Y - 1,
+        AUTOMAP_X + AUTOMAP_SIZE * AUTOMAP_CELL, AUTOMAP_Y + AUTOMAP_SIZE * AUTOMAP_CELL);
+
+    for (int y = 0; y < AUTOMAP_SIZE; y++)
+    {
+        for (int x = 0; x < AUTOMAP_SIZE; x++)
+        {
+            int left = AUTOMAP_X + x * AUTOMAP_CELL;
+            int top = AUTOMAP_Y + y * AUTOMAP_CELL;
+            int cell = GetDungeonMap(x, y, level);
+
+            if (!AUTOMAP_IsSeen(dungeon, level, x, y))
+                continue;
+
+            if (CellIsWall(cell))
+            {
+                FillBox(EGA_LIGHT_GRAY, left, top, left + AUTOMAP_CELL - 1, top + AUTOMAP_CELL - 1);
+                continue;
+            }
+
+            FillBox(EGA_DARK_GRAY, left + 1, top + 1, left + AUTOMAP_CELL - 2, top + AUTOMAP_CELL - 2);
+            DrawSymbol(CellSymbol(cell), left + 4, top + 4);
+        }
+    }
+
+    if (level == D_5895_map_level)
+    {
+        int left = AUTOMAP_X + D_5896_map_x * AUTOMAP_CELL;
+        int top = AUTOMAP_Y + D_5897_map_y * AUTOMAP_CELL;
+
+        FillBox(EGA_DARK_GRAY, left + 1, top + 1, left + AUTOMAP_CELL - 2, top + AUTOMAP_CELL - 2);
+        DrawArrow(EGA_WHITE, left + 4, top + 4, D_6603 & 3);
+    }
+
+    // The level the party is on, if another is shown.
+    ULTIMA_1bf2_SetTextPosition(1, SCREEN_BOTTOM - 3);
+    PrintPadded("", SCREEN_RIGHT - 1);
+    if (level != D_5895_map_level)
+    {
+        sprintf(text, "You are on level %d", D_5895_map_level + 1);
+        PrintCentered(SCREEN_BOTTOM - 3, text);
+    }
+}
+
+static void DrawAutomapLegend(void)
+{
+    int row = AUTOMAP_LEGEND_FIRST_ROW;
+
+    DrawArrow(EGA_WHITE, AUTOMAP_LEGEND_X, row * 8, 0);
+    PrintAt(AUTOMAP_LEGEND_TEXT_COLUMN, row, "You");
+    row += 2;
+
+    for (int symbol = SYMBOL_UP_LADDER; symbol <= SYMBOL_DOOR; symbol++, row += 2)
+    {
+        DrawSymbol(symbol, AUTOMAP_LEGEND_X, row * 8);
+        PrintAt(AUTOMAP_LEGEND_TEXT_COLUMN, row, s_symbolNames[symbol]);
+    }
+}
+
+// The next level in direction (+1 or -1) with something seen, or level.
+static int NextSeenLevel(int dungeon, int level, int direction)
+{
+    for (int i = level + direction; i >= 0 && i < AUTOMAP_LEVELS; i += direction)
+    {
+        if (AUTOMAP_LevelSeen(dungeon, i))
+            return i;
+    }
+    return level;
+}
+
+static void ShowAutomap(void)
+{
+    int dungeon = AUTOMAP_CurrentDungeon();
+    int level = D_5895_map_level;
+
+    s_menuOpen = true;
+    g_presentFullScreenPage = true;
+    D_538e = 1;
+
+    ULTIMA_1c22_SetTextWindowSize(0, 0, 0, SCREEN_RIGHT, SCREEN_BOTTOM);
+    ULTIMA_1b94_SelectTextWindow(0);
+    ULTIMA_0c22_GRAP_0f_SelectPage(0);
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    DrawFrame();
+
+    if (dungeon < 0)
+    {
+        PrintCentered(1, "Dungeon Map");
+        PrintCentered(10, "The map shows the dungeons");
+        PrintCentered(11, "you explore. You aren't in one.");
+        PrintCentered(SCREEN_BOTTOM - 1, "Any key: done");
+        ReadKey();
+    }
+    else
+    {
+        AUTOMAP_Flush();
+        DrawAutomapLegend();
+        DrawAutomapLevel(dungeon, level);
+        PrintCentered(SCREEN_BOTTOM - 1, "PgUp/PgDn: level   Esc: done");
+
+        for (;;)
+        {
+            int key = ReadKey();
+            int previous = level;
+
+            if (key == U5_KEY_ESC || key == U5_KEY_ENTER)
+                break;
+
+            if (key == U5_KEY_PGUP || key == U5_KEY_UP || key == U5_KEY_LEFT)
+                level = NextSeenLevel(dungeon, level, -1);
+            else if (key == U5_KEY_PGDN || key == U5_KEY_DOWN || key == U5_KEY_RIGHT)
+                level = NextSeenLevel(dungeon, level, 1);
+
+            if (level != previous)
+                DrawAutomapLevel(dungeon, level);
+        }
+    }
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    s_menuOpen = false;
+    g_presentFullScreenPage = false;
+}
+
+#endif
+
 bool OPTIONS_MENU_IsOpen(void)
 {
     return s_menuOpen;
@@ -1144,6 +1431,14 @@ void OPTIONS_MENU_ShowSpellsInGame(void)
 void OPTIONS_MENU_ShowJournalInGame(void)
 {
     RunOverGame(ShowJournal);
+}
+#endif
+
+#if defined(ENABLE_AUTOMAP)
+// Opened with F10 while the game waits for a key.
+void OPTIONS_MENU_ShowAutomapInGame(void)
+{
+    RunOverGame(ShowAutomap);
 }
 #endif
 

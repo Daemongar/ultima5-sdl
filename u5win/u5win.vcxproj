@@ -309,6 +309,7 @@ exit /b 0</Command>
     <ClCompile Include="..\src\options_menu.c" />
     <ClCompile Include="..\src\save_slots.c" />
     <ClCompile Include="..\src\journal.c" />
+    <ClCompile Include="..\src\automap.c" />
     <ClCompile Include="..\src\map_name.c" />
     <ClCompile Include="..\src\wide_view.c" />
     <ClCompile Include="..\src\outsubs.c" />
@@ -365,6 +366,7 @@ exit /b 0</Command>
     <ClInclude Include="..\src\options_menu.h" />
     <ClInclude Include="..\src\save_slots.h" />
     <ClInclude Include="..\src\journal.h" />
+    <ClInclude Include="..\src\automap.h" />
     <ClInclude Include="..\src\map_name.h" />
     <ClInclude Include="..\src\wide_view.h" />
     <ClInclude Include="..\src\common\options.h" />

@@ -11,6 +11,7 @@
 
 #include "font.h"
 #include "intro.h"
+#include "automap.h"
 #include "journal.h"
 
 #include <string.h>
@@ -1664,8 +1665,11 @@ L_GOG_1402:
     ULTIMA_25d8_WriteFileToDisk(/*0x364b*/ "SAVED.GAM", &D_55a6, ((byte*)&D_6606 - (byte*)&D_55a6));
 #endif
 #if defined(ENABLE_JOURNAL)
-    // A new character starts a new journal.
+    // A new character starts a new journal and no maps.
     JOURNAL_Clear();
+#endif
+#if defined(ENABLE_AUTOMAP)
+    AUTOMAP_Clear();
 #endif
     ULTIMA_251e_SwitchDisks(0);
 

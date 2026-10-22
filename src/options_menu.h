@@ -19,6 +19,11 @@ void OPTIONS_MENU_ShowSpellsInGame(void);
 void OPTIONS_MENU_ShowJournalInGame(void);
 #endif
 
+#if defined(ENABLE_AUTOMAP)
+// The map of the current dungeon, opened with F10.
+void OPTIONS_MENU_ShowAutomapInGame(void);
+#endif
+
 #if defined(ENABLE_SAVE_SLOTS)
 // Screen of save slots, opened with F6 (saving) or F7 (loading). Returns the
 // chosen slot (SAVE_SLOT_QUICK or 1-9), or -1 if the player backed out.

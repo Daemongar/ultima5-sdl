@@ -76,6 +76,8 @@ Press **F2** during play for a page listing the game's keyboard shortcuts; any k
 
 Press **F4**, at any time (even mid-conversation), for the journal. Whenever you ask someone about a keyword, everything they say in reply is kept there: their questions, your answers and what they finally tell you, such as a shrine's mantra. It lists the people who have answered under the town they live in; type a word to find who mentioned it, and Enter to read what they said, keyword by keyword. People are listed by their description until you have asked their NAME. Goodbyes, HINT and "I cannot help thee" aren't kept, and two questions with the same answer (JOB and WORK) share one entry. The journal is kept in `SAVEGAME/JOURNAL.TXT`. Loading an older save doesn't take back what you heard, and creating a new character starts a new journal.
 
+Press **F10** in a dungeon for a map of the level you're on. It fills in as you explore: the cells your torch or light spell lets you see, the cells you walk through (even in the dark) and the walls you bump into. Walls, doors, ladders, chests, fountains, pits and fields are marked, with an arrow for you and the way you face; PgUp/PgDn show the other levels you have explored. Secret walls look like walls, and the map shows the dungeon as it is now (opened chests are gone). What you've seen is kept in `SAVEGAME/AUTOMAP.DAT`; like the journal, loading an older save doesn't take it back, and a new character starts with no maps.
+
 Press **F5** at the command prompt to quicksave and **F9** to load the quicksave (it asks first). **F6** and **F7** open a screen of nine more save slots, to save to or load from: arrow keys or a number choose, Enter saves or loads, Esc goes back, and saving over a slot asks first. Each slot shows the party leader, their level, where the party is, the game date and when it was saved. The slots are folders in `SAVEGAME/` (`QUICK`, `SLOT1`-`SLOT9`) holding copies of `SAVED.GAM` and `SAVED.OOL`. Saving to a slot also saves the game as Quit does, and loading one makes it the game Journey Onward continues.
 
 Settings are stored in `ultima5.ini` in the game data directory:
@@ -205,6 +207,7 @@ Brighter nights outdoors.
 Esc opens the quit prompt.
 Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
+A dungeon map (F10) that fills in as you explore.
 Level-up stat gains are weighted by class.
 Bard mana rounds up.
 Vas Mani (Great Heal) works during combat.

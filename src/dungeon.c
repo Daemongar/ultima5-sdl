@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include "automap.h"
 #include "blckthrn.h"
 #include "combat.h"
 #include "dnglook.h"
@@ -417,6 +418,10 @@ static int DUNGEON_0502(int param_1, byte param_2)
         {
             // 061d
             ULTIMA_1850_PrintString(_TEXT(0x2d19, "Blocked!\n"));
+#if defined(ENABLE_AUTOMAP)
+            // Walking into a wall finds it, even in the dark.
+            AUTOMAP_See(local_8, local_a);
+#endif
         }
         else
         {
@@ -1584,6 +1589,11 @@ void DUNGEON_1a90(int param_1)
     ULTIMA_0c3c(0x28, 0x2a, 0x98, 0xb7);
     D_52ba_vdp._52c4 = 0;
 
+#if defined(ENABLE_AUTOMAP)
+    // The party knows the cell it stands on, light or not.
+    AUTOMAP_See(D_5896_map_x, D_5897_map_y);
+#endif
+
     if (D_58a6 != 0 || D_58a7 != 0)
     {
         local_6_x = D_5896_map_x;
@@ -1596,11 +1606,19 @@ void DUNGEON_1a90(int param_1)
             // 1b0e
             if (DUNGEON_150a(local_6_x, local_8_y, local_4) != 0)
             {
+#if defined(ENABLE_AUTOMAP)
+                AUTOMAP_See(local_6_x, local_8_y);
+#endif
                 if (local_4 != 0 || (DUNGEON_10dc(D_5896_map_x, D_5897_map_y) != 0xe0 && param_1 != 0))
                 {
                     // 1b36
                     DUNGEON_1682((u8)D_2f28[D_6603] + local_6_x, (u8)D_2f2c[D_6603] + local_8_y, 0, local_4);
                     DUNGEON_1682(local_6_x - (u8)D_2f28[D_6603], local_8_y - (u8)D_2f2c[D_6603], 1, local_4);
+#if defined(ENABLE_AUTOMAP)
+                    // The cells either side, drawn as walls or openings.
+                    AUTOMAP_See(local_6_x + D_2f28[D_6603], local_8_y + D_2f2c[D_6603]);
+                    AUTOMAP_See(local_6_x - D_2f28[D_6603], local_8_y - D_2f2c[D_6603]);
+#endif
                 }
 
                 local_6_x += local_a;
@@ -1608,6 +1626,10 @@ void DUNGEON_1a90(int param_1)
             }
             else
             {
+#if defined(ENABLE_AUTOMAP)
+                // The wall or door the view ends at.
+                AUTOMAP_See(local_6_x, local_8_y);
+#endif
                 break;
             }
         }
@@ -1627,6 +1649,10 @@ void DUNGEON_1a90(int param_1)
 
     ULTIMA_0c22_GRAP_0f_SelectPage(0);
     D_52ba_vdp._52c4 = 0;
+
+#if defined(ENABLE_AUTOMAP)
+    AUTOMAP_Flush();
+#endif
 }
 
 // OK P1

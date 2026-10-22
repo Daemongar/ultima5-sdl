@@ -161,6 +161,9 @@
 // questions, by person and keyword (see journal.c).
 //#define ENABLE_JOURNAL 1
 
+// A map (F10) of the dungeon cells the party has seen (see automap.c).
+//#define ENABLE_AUTOMAP 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -194,6 +197,7 @@
 #define ENABLE_SKIFF_RIVER_EXIT 1
 #define ENABLE_SAVE_SLOTS 1
 #define ENABLE_JOURNAL 1
+#define ENABLE_AUTOMAP 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

@@ -10,6 +10,7 @@
 
 #include "font.h"
 #include "intro.h"
+#include "automap.h"
 #include "journal.h"
 #include "tiles.h"
 
@@ -746,8 +747,11 @@ void FONT_0b0a(void)
         ULTIMA_25d8_WriteFileToDisk(/*0xa0d6*/ "SAVED.GAM", &D_55a6, (int)&D_6606 - (int)&D_55a6);
 #endif
 #if defined(ENABLE_JOURNAL)
-        // A new character starts a new journal.
+        // A new character starts a new journal and no maps.
         JOURNAL_Clear();
+#endif
+#if defined(ENABLE_AUTOMAP)
+        AUTOMAP_Clear();
 #endif
     }
 

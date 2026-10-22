@@ -110,15 +110,16 @@ static u16 KeyboardEventToUltimaKeycode(SDL_KeyboardEvent ev)
     return key;
 }
 
-// F1 opens the Options screen, F2 the shortcuts screen, F3 the spells screen
-// and F4 the journal the next time the game waits for a key.
+// F1 opens the Options screen, F2 the shortcuts screen, F3 the spells screen,
+// F4 the journal and F10 the dungeon map the next time the game waits for a key.
 static int s_screenRequested;
 
 extern void GRAP_SDL_ReloadColorTiles(void);
 
 void KEY_SDL_ProcessKeyDown(SDL_KeyboardEvent ev)
 {
-    if (ev.key == SDLK_F1 || ev.key == SDLK_F2 || ev.key == SDLK_F3 || ev.key == SDLK_F4)
+    if (ev.key == SDLK_F1 || ev.key == SDLK_F2 || ev.key == SDLK_F3 || ev.key == SDLK_F4 ||
+        ev.key == SDLK_F10)
     {
         s_screenRequested = ev.key;
         return;
@@ -236,8 +237,12 @@ int KEY_PollKey(void)
         else if (screen == SDLK_F3)
             OPTIONS_MENU_ShowSpellsInGame();
 #if defined(ENABLE_JOURNAL)
-        else
+        else if (screen == SDLK_F4)
             OPTIONS_MENU_ShowJournalInGame();
+#endif
+#if defined(ENABLE_AUTOMAP)
+        else if (screen == SDLK_F10)
+            OPTIONS_MENU_ShowAutomapInGame();
 #endif
         return 0;
     }
