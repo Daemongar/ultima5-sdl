@@ -164,6 +164,11 @@
 // A map (F10) of the dungeon cells the party has seen (see automap.c).
 //#define ENABLE_AUTOMAP 1
 
+// When mixing, tick the chosen spell's reagents from the spell book (if all
+// are owned) and say how many can be made. In Xen Mani and Rel Xen Bet,
+// learned in the game, stay manual.
+//#define ENABLE_MIX_RECIPES 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -198,6 +203,7 @@
 #define ENABLE_SAVE_SLOTS 1
 #define ENABLE_JOURNAL 1
 #define ENABLE_AUTOMAP 1
+#define ENABLE_MIX_RECIPES 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

@@ -41,6 +41,9 @@ static OptionFlag s_flags[] =
     {"gameplay", "stat_per_level", &g_options.statPerLevel, true},
     {"gameplay", "vanishing_rings", &g_options.vanishingRings, true},
     {"gameplay", "u4_class_mana", &g_options.u4ClassMana, true},
+#if defined(ENABLE_MIX_RECIPES)
+    {"gameplay", "mix_recipes", &g_options.mixRecipes, true},
+#endif
 };
 
 static const char* s_windowModeNames[] = {"fullscreen", "bordered", "windowed"};

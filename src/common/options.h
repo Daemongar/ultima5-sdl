@@ -49,6 +49,7 @@ typedef struct Options
     bool statPerLevel;
     bool vanishingRings;
     bool u4ClassMana;
+    bool mixRecipes;
 } Options;
 
 extern Options g_options;

@@ -208,6 +208,7 @@ Esc opens the quit prompt.
 Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
 A dungeon map (F10) that fills in as you explore.
+Recipe helper: when mixing, the spell's reagents from the spell book are already ticked if you have them all, and "How much?" says how many you can make. In Xen Mani and Rel Xen Bet, learned in the game, stay manual.
 Level-up stat gains are weighted by class.
 Bard mana rounds up.
 Vas Mani (Great Heal) works during combat.

@@ -1,4 +1,5 @@
 #include "common/common.h"
+#include "common/options.h"
 #include "class_mana.h"
 #include "funcs.h"
 #include "vars.h"
@@ -1565,6 +1566,31 @@ int CMDS_17ec_Escape(void)
 
 // CMDS_MIX.C?
 
+#if defined(ENABLE_MIX_RECIPES)
+// Recipes the player learns by talking to people in the game, not from the
+// spell book; the recipe helper leaves these to them.
+#define SPELL_IN_XEN_MANI 11
+#define SPELL_REL_XEN_BET 35
+
+// Reagents to tick before the player chooses (bit 0x80 >> reagent).
+static int s_mixRecipe;
+
+// The spell book's recipe for spell, if the helper is on and the party has
+// some of every reagent in it.
+static int CMDS_MixRecipe(int spell)
+{
+    if (!g_options.mixRecipes || spell < 0 || spell == SPELL_IN_XEN_MANI || spell == SPELL_REL_XEN_BET)
+        return 0;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if ((D_1cc0[spell] & (0x80 >> i)) != 0 && D_5850[i] == 0)
+            return 0;
+    }
+    return D_1cc0[spell];
+}
+#endif
+
 // OK P1
 // select reagents
 static int CMDS_18be(void)
@@ -1606,6 +1632,21 @@ static int CMDS_18be(void)
 
     // d8f2
     local_6 = local_18 = 0;
+
+#if defined(ENABLE_MIX_RECIPES)
+    // Tick the recipe's reagents, marked as RETURN would mark them (the
+    // cursor highlight isn't drawn yet, so no inversion here).
+    for (local_8 = 0; local_8 != local_16; local_8++)
+    {
+        local_14 = 0x80 >> local_12[local_8];
+        if ((s_mixRecipe & local_14) != 0)
+        {
+            local_18 |= local_14;
+            ULTIMA_1bf2_SetTextPosition(3, local_8 + 1);
+            ULTIMA_16ba_PrintChar(0xf);
+        }
+    }
+#endif
 
     ULTIMA_2a28(1);
     local_4 = 0;
@@ -1688,6 +1729,24 @@ static int CMDS_1a70(int param_1)
     int local_8;
     int local_a;
 
+#if defined(ENABLE_MIX_RECIPES)
+    // How many the chosen reagents make: the fewest of any of them.
+    if (g_options.mixRecipes && param_1 != 0)
+    {
+        local_4 = 99;
+        for (local_8 = 0; local_8 < 8; local_8++)
+        {
+            if ((param_1 & (0x80 >> local_8)) != 0 && D_5850[local_8] < local_4)
+            {
+                local_4 = D_5850[local_8];
+            }
+        }
+        ULTIMA_1850_PrintString("Up to ");
+        ULTIMA_1a3e_PrintNumber(local_4, 1, 0x20);
+        ULTIMA_1850_PrintString(".\n");
+    }
+#endif
+
     do
     {
         local_6 = 1;
@@ -1751,6 +1810,9 @@ void CMDS_1ad8_MixCmd(void)
         ULTIMA_16ba_PrintChar(0x19);
         ULTIMA_1850_PrintString(_TEXT(0x8fc6, " to move,\nRETURN selects.\nType M to mix:"));
 
+#if defined(ENABLE_MIX_RECIPES)
+        s_mixRecipe = CMDS_MixRecipe(local_6);
+#endif
         local_4 = CMDS_18be();
         if (local_4 >= 0)
         {

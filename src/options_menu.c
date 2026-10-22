@@ -83,6 +83,9 @@ static OptionItem s_items[] =
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Stat point per level", &g_options.statPerLevel, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Vanishing rings", &g_options.vanishingRings, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Ultima IV class mana", &g_options.u4ClassMana, NULL},
+#if defined(ENABLE_MIX_RECIPES)
+    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Recipe helper", &g_options.mixRecipes, NULL},
+#endif
 };
 
 static char* s_pageNames[PAGE_COUNT] = {"Display", "Sound", "Gameplay"};
@@ -151,7 +154,7 @@ static int PageItems(int page, OptionItem** items)
 }
 
 // Most items on any page; rows below a short page's items are blanked.
-#define MAX_PAGE_ITEMS 16
+#define MAX_PAGE_ITEMS 17
 #define LABEL_WIDTH 20
 #define VALUE_WIDTH 11
 
