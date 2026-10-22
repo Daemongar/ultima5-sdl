@@ -10,6 +10,7 @@
 
 #include "font.h"
 #include "intro.h"
+#include "journal.h"
 #include "tiles.h"
 
 // CHECKED
@@ -743,6 +744,10 @@ void FONT_0b0a(void)
         FILE_WriteSavegameFile(/*0xa0d6*/ "SAVED.GAM");
 #else
         ULTIMA_25d8_WriteFileToDisk(/*0xa0d6*/ "SAVED.GAM", &D_55a6, (int)&D_6606 - (int)&D_55a6);
+#endif
+#if defined(ENABLE_JOURNAL)
+        // A new character starts a new journal.
+        JOURNAL_Clear();
 #endif
     }
 

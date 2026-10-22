@@ -119,6 +119,12 @@
     <ClCompile Include="..\src\save_slots.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\journal.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\map_name.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\wide_view.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -347,6 +353,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\save_slots.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\journal.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\map_name.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wide_view.h">

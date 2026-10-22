@@ -157,6 +157,10 @@
 // one of nine slots (see save_slots.c). The original kept a single save.
 //#define ENABLE_SAVE_SLOTS 1
 
+// A journal (F4) of everything people have said in answer to the player's
+// questions, by person and keyword (see journal.c).
+//#define ENABLE_JOURNAL 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -189,6 +193,7 @@
 #define ENABLE_ANIMATED_COLOR_TILES 1
 #define ENABLE_SKIFF_RIVER_EXIT 1
 #define ENABLE_SAVE_SLOTS 1
+#define ENABLE_JOURNAL 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

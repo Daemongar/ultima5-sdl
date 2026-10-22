@@ -5,6 +5,8 @@
 #include "vars.h"
 
 #include "options_menu.h"
+#include "journal.h"
+#include "map_name.h"
 #include "save_slots.h"
 #include "graphics/grap_buf.h"
 #include "key/key.h"
@@ -13,6 +15,7 @@
 #if defined(TARGET_SDL)
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Options screen reached from the title menu. Drawn with the game's font and
@@ -381,8 +384,9 @@ static char* s_otherKeys[] =
     "Ctrl+B Key buffer", "Ctrl+V Version",
     "Ctrl+E Exit game",  "F1     Options",
     "F2     This page",  "F3     Spells",
+    "F4     Journal",    "F8     Reload BMP",
     "F5     Quicksave",  "F9     Quickload",
-    "F8     Reload BMP", "F6/F7  Save/load",
+    "F6/F7  Save/load",
 };
 
 #define SHORTCUT_LEFT_COLUMN 3
@@ -409,8 +413,8 @@ static void ShowShortcuts(void)
     ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
     DrawFrame();
     PrintCentered(1, "Keyboard Shortcuts");
-    PrintTwoColumns(s_commandKeys, ARRAYSIZE(s_commandKeys), 3);
-    PrintTwoColumns(s_otherKeys, ARRAYSIZE(s_otherKeys), 15);
+    PrintTwoColumns(s_commandKeys, ARRAYSIZE(s_commandKeys), 2);
+    PrintTwoColumns(s_otherKeys, ARRAYSIZE(s_otherKeys), 14);
     PrintCentered(SCREEN_BOTTOM - 1, "Any key: done");
 
     ReadKey();
@@ -693,6 +697,378 @@ static void ShowSaveSlots(void)
 
 #endif
 
+#if defined(ENABLE_JOURNAL)
+
+// Journal screen (F4): a list of the people who have answered the player's
+// questions, under the places they live; typing filters it. Enter shows what
+// one person said, keyword by keyword.
+#define JOURNAL_FIND_ROW 3
+#define JOURNAL_FIRST_ROW 5
+#define JOURNAL_ROWS 17
+#define JOURNAL_TEXT_COLUMN 2
+#define JOURNAL_TEXT_WIDTH (SCREEN_RIGHT - 1 - JOURNAL_TEXT_COLUMN)
+#define JOURNAL_FIND_MAX 20
+#define JOURNAL_MAX_LINES 2000
+
+typedef struct JournalRow
+{
+    int person; // -1 for a place's heading
+    int mapId;
+} JournalRow;
+
+typedef struct JournalLine
+{
+    char text[40];
+    bool keyword;
+} JournalLine;
+
+static JournalRow* s_journalRows;
+static int s_journalRowCount;
+static JournalLine s_journalLines[JOURNAL_MAX_LINES];
+static int s_journalLineCount;
+
+// Rows for the people matching filter, each place's heading before them.
+static void BuildJournalRows(const char* filter)
+{
+    int count = JOURNAL_PersonCount();
+    int lastMap = -1;
+
+    free(s_journalRows);
+    s_journalRows = malloc((count * 2 + 1) * sizeof(JournalRow));
+    s_journalRowCount = 0;
+
+    for (int i = 0; i < count; i++)
+    {
+        JournalPerson* person = JOURNAL_GetPerson(i);
+
+        if (!JOURNAL_PersonMatches(person, filter))
+            continue;
+
+        if (person->mapId != lastMap)
+        {
+            s_journalRows[s_journalRowCount].person = -1;
+            s_journalRows[s_journalRowCount++].mapId = person->mapId;
+            lastMap = person->mapId;
+        }
+        s_journalRows[s_journalRowCount].person = i;
+        s_journalRows[s_journalRowCount++].mapId = person->mapId;
+    }
+}
+
+// The next row after row in direction (+1 or -1) that is a person, or row if
+// there is none.
+static int NextPersonRow(int row, int direction)
+{
+    for (int i = row + direction; i >= 0 && i < s_journalRowCount; i += direction)
+    {
+        if (s_journalRows[i].person >= 0)
+            return i;
+    }
+    return row;
+}
+
+static void DrawJournalList(const char* filter, int selected, int top)
+{
+    char text[48];
+
+    ULTIMA_1bf2_SetTextPosition(JOURNAL_TEXT_COLUMN, JOURNAL_FIND_ROW);
+    if (filter[0])
+    {
+        strcpy(text, "Find: ");
+        strcat(text, filter);
+        strcat(text, "_");
+    }
+    else
+    {
+        strcpy(text, "Type to find a word");
+    }
+    PrintPadded(text, JOURNAL_TEXT_WIDTH);
+
+    for (int i = 0; i < JOURNAL_ROWS; i++)
+    {
+        int row = top + i;
+        int y = JOURNAL_FIRST_ROW + i;
+
+        ULTIMA_1bf2_SetTextPosition(JOURNAL_TEXT_COLUMN, y);
+        if (row >= s_journalRowCount)
+        {
+            if (row == 0)
+            {
+                PrintPadded(filter[0] ? "No one has mentioned that." : "No one has told you anything yet.",
+                    JOURNAL_TEXT_WIDTH);
+            }
+            else
+            {
+                PrintPadded("", JOURNAL_TEXT_WIDTH);
+            }
+            continue;
+        }
+
+        if (s_journalRows[row].person < 0)
+        {
+            PrintPadded(MAP_GetName(s_journalRows[row].mapId, 0), JOURNAL_TEXT_WIDTH);
+            continue;
+        }
+
+        PrintPadded("", 1);
+        if (row == selected)
+            ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+        ULTIMA_16ba_PrintChar(0x20);
+        strncpy(text, JOURNAL_PersonTitle(JOURNAL_GetPerson(s_journalRows[row].person)), JOURNAL_TEXT_WIDTH - 4);
+        text[JOURNAL_TEXT_WIDTH - 4] = '\0';
+        ULTIMA_1850_PrintString(text);
+        ULTIMA_16ba_PrintChar(0x20);
+        if (row == selected)
+            ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+        PrintPadded("", JOURNAL_TEXT_WIDTH - 3 - (int)strlen(text));
+    }
+}
+
+static void AddJournalLine(const char* text, int length, bool keyword)
+{
+    if (s_journalLineCount >= JOURNAL_MAX_LINES)
+        return;
+
+    JournalLine* line = &s_journalLines[s_journalLineCount++];
+    if (length > (int)sizeof(line->text) - 1)
+        length = sizeof(line->text) - 1;
+    memcpy(line->text, text, length);
+    line->text[length] = '\0';
+    line->keyword = keyword;
+}
+
+// Word-wraps text into lines of width, starting a new line at each '\n'.
+static void AddWrappedLines(const char* text, int width)
+{
+    char line[40];
+
+    while (*text)
+    {
+        int length = 0;
+        int lastSpace = -1;
+
+        while (text[length] && text[length] != '\n' && length < width)
+        {
+            if (text[length] == ' ')
+                lastSpace = length;
+            length++;
+        }
+
+        if (text[length] && text[length] != '\n' && text[length] != ' ' && lastSpace > 0)
+            length = lastSpace;
+
+        strcpy(line, "  ");
+        memcpy(line + 2, text, length);
+        AddJournalLine(line, length + 2, false);
+
+        text += length;
+        while (*text == ' ' || *text == '\n')
+        {
+            if (*text++ == '\n')
+                break;
+        }
+    }
+}
+
+static void BuildJournalLines(JournalPerson* person)
+{
+    s_journalLineCount = 0;
+
+    for (int i = 0; i < person->entryCount; i++)
+    {
+        if (i > 0)
+            AddJournalLine("", 0, false);
+        AddJournalLine(person->entries[i].keyword, (int)strlen(person->entries[i].keyword), true);
+        AddWrappedLines(person->entries[i].text, JOURNAL_TEXT_WIDTH - 2);
+    }
+}
+
+static void DrawJournalLines(int top)
+{
+    for (int i = 0; i < JOURNAL_ROWS + 1; i++)
+    {
+        int index = top + i;
+
+        ULTIMA_1bf2_SetTextPosition(JOURNAL_TEXT_COLUMN, JOURNAL_FIRST_ROW - 1 + i);
+        if (index >= s_journalLineCount)
+        {
+            PrintPadded("", JOURNAL_TEXT_WIDTH);
+        }
+        else if (s_journalLines[index].keyword)
+        {
+            ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+            ULTIMA_16ba_PrintChar(0x20);
+            ULTIMA_1850_PrintString(s_journalLines[index].text);
+            ULTIMA_16ba_PrintChar(0x20);
+            ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+            PrintPadded("", JOURNAL_TEXT_WIDTH - 2 - (int)strlen(s_journalLines[index].text));
+        }
+        else
+        {
+            PrintPadded(s_journalLines[index].text, JOURNAL_TEXT_WIDTH);
+        }
+    }
+}
+
+// One person's page; returns when the player presses Esc.
+static void ShowJournalPerson(JournalPerson* person)
+{
+    char title[40];
+    int top = 0;
+    int pageRows = JOURNAL_ROWS + 1;
+
+    BuildJournalLines(person);
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    DrawFrame();
+    strncpy(title, JOURNAL_PersonTitle(person), JOURNAL_TEXT_WIDTH);
+    title[JOURNAL_TEXT_WIDTH] = '\0';
+    PrintCentered(1, title);
+    PrintCentered(2, MAP_GetName(person->mapId, 0));
+    PrintCentered(SCREEN_BOTTOM - 1, "Arrows: scroll   Esc: back");
+    DrawJournalLines(top);
+
+    for (;;)
+    {
+        int key = ReadKey();
+        int maxTop = s_journalLineCount > pageRows ? s_journalLineCount - pageRows : 0;
+        int previous = top;
+
+        if (key == U5_KEY_ESC)
+            return;
+
+        switch (key)
+        {
+        case U5_KEY_UP:
+            top--;
+            break;
+        case U5_KEY_DOWN:
+            top++;
+            break;
+        case U5_KEY_PGUP:
+        case U5_KEY_LEFT:
+            top -= pageRows - 1;
+            break;
+        case U5_KEY_PGDN:
+        case U5_KEY_RIGHT:
+        case U5_KEY_SPACE:
+            top += pageRows - 1;
+            break;
+        }
+
+        if (top > maxTop)
+            top = maxTop;
+        if (top < 0)
+            top = 0;
+        if (top != previous)
+            DrawJournalLines(top);
+    }
+}
+
+static void DrawJournalStatic(void)
+{
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    DrawFrame();
+    PrintCentered(1, "Journal");
+    PrintCentered(SCREEN_BOTTOM - 1, "Enter: read   Esc: done");
+}
+
+static void ShowJournal(void)
+{
+    char filter[JOURNAL_FIND_MAX + 1] = "";
+    int selected;
+    int top = 0;
+
+    s_menuOpen = true;
+    g_presentFullScreenPage = true;
+    D_538e = 1;
+
+    ULTIMA_1c22_SetTextWindowSize(0, 0, 0, SCREEN_RIGHT, SCREEN_BOTTOM);
+    ULTIMA_1b94_SelectTextWindow(0);
+    ULTIMA_0c22_GRAP_0f_SelectPage(0);
+
+    BuildJournalRows(filter);
+    selected = NextPersonRow(-1, 1);
+    DrawJournalStatic();
+    DrawJournalList(filter, selected, top);
+
+    for (;;)
+    {
+        int key = ReadKey();
+        int length = (int)strlen(filter);
+        bool filterChanged = false;
+
+        if (key == U5_KEY_ESC)
+            break;
+
+        switch (key)
+        {
+        case U5_KEY_UP:
+            selected = NextPersonRow(selected, -1);
+            break;
+        case U5_KEY_DOWN:
+            selected = NextPersonRow(selected, 1);
+            break;
+        case U5_KEY_PGUP:
+            for (int i = 0; i < JOURNAL_ROWS - 1; i++)
+                selected = NextPersonRow(selected, -1);
+            break;
+        case U5_KEY_PGDN:
+            for (int i = 0; i < JOURNAL_ROWS - 1; i++)
+                selected = NextPersonRow(selected, 1);
+            break;
+        case U5_KEY_BACKSPACE:
+            if (length > 0)
+            {
+                filter[length - 1] = '\0';
+                filterChanged = true;
+            }
+            break;
+        case U5_KEY_ENTER:
+            if (selected >= 0 && selected < s_journalRowCount && s_journalRows[selected].person >= 0)
+            {
+                ShowJournalPerson(JOURNAL_GetPerson(s_journalRows[selected].person));
+                DrawJournalStatic();
+            }
+            break;
+        default:
+            key = ULTIMA_2032_ToUpper((u8)key);
+            if (((key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == ' ' || key == '\'') &&
+                length < JOURNAL_FIND_MAX && (length > 0 || key != ' '))
+            {
+                filter[length] = (char)key;
+                filter[length + 1] = '\0';
+                filterChanged = true;
+            }
+            break;
+        }
+
+        if (filterChanged)
+        {
+            BuildJournalRows(filter);
+            selected = NextPersonRow(-1, 1);
+            top = 0;
+        }
+
+        // Keep the selection, and its place's heading, on screen.
+        if (selected >= 0 && selected < top + 1)
+            top = selected > 0 && s_journalRows[selected - 1].person < 0 ? selected - 1 : selected;
+        if (selected >= top + JOURNAL_ROWS)
+            top = selected - JOURNAL_ROWS + 1;
+
+        DrawJournalList(filter, selected, top);
+    }
+
+    free(s_journalRows);
+    s_journalRows = NULL;
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    s_menuOpen = false;
+    g_presentFullScreenPage = false;
+}
+
+#endif
+
 bool OPTIONS_MENU_IsOpen(void)
 {
     return s_menuOpen;
@@ -762,6 +1138,14 @@ void OPTIONS_MENU_ShowSpellsInGame(void)
 {
     RunOverGame(ShowSpells);
 }
+
+#if defined(ENABLE_JOURNAL)
+// Opened with F4 while the game waits for a key.
+void OPTIONS_MENU_ShowJournalInGame(void)
+{
+    RunOverGame(ShowJournal);
+}
+#endif
 
 #if defined(ENABLE_SAVE_SLOTS)
 // Opened with F6 (saving) or F7 (loading) at a command prompt.

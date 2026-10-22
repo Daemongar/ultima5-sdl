@@ -14,6 +14,7 @@
 #include "audio/audio.h"
 #include "cast2.h"
 #include "common/file.h"
+#include "map_name.h"
 #include "options_menu.h"
 #include "savegame.h"
 
@@ -47,16 +48,6 @@ static char* s_saveFiles[] = {"SAVED.GAM", "SAVED.OOL"};
 #define GAM_MAP_ID 0x2ed
 #define GAM_MAP_LEVEL 0x2ef
 #define GAM_HEADER_SIZE 0x2f0
-
-// Maps with no name in the game's own table (D_1e3a), by map ID.
-static char* s_unnamedMaps[] =
-{
-    "SUTEK'S HUT",         // 0x0e
-    "SIN VRAAL'S HUT",     // 0x0f
-    "GRENDEL'S HUT",       // 0x10
-    "CASTLE BRITISH",      // 0x11
-    "BLACKTHORN'S PALACE", // 0x12
-};
 
 static void SlotDir(int slot, char* out)
 {
@@ -122,17 +113,6 @@ static bool CopySlot(int slot, bool toSlot)
     return true;
 }
 
-static char* MapName(int mapId, int mapLevel)
-{
-    if (mapId == 0)
-        return mapLevel != 0 ? "UNDERWORLD" : "BRITANNIA";
-    if (mapId >= 1 && mapId <= ARRAYSIZE(D_1e3a) && D_1e3a[mapId - 1])
-        return D_1e3a[mapId - 1];
-    if (mapId >= 0x0e && mapId < 0x0e + ARRAYSIZE(s_unnamedMaps))
-        return s_unnamedMaps[mapId - 0x0e];
-    return "";
-}
-
 time_t SAVESLOTS_Describe(int slot, char* line1, char* line2)
 {
     char dir[64];
@@ -163,7 +143,7 @@ time_t SAVESLOTS_Describe(int slot, char* line1, char* line2)
     memcpy(name, gam + GAM_LEADER_NAME, 8);
     name[8] = '\0';
     sprintf(line1, "%-8s Lv%-2d %s", name, gam[GAM_LEADER_LEVEL],
-        MapName(gam[GAM_MAP_ID], gam[GAM_MAP_LEVEL]));
+        MAP_GetName(gam[GAM_MAP_ID], gam[GAM_MAP_LEVEL]));
 
     strftime(when, sizeof(when), "%b %d %H:%M", localtime(&info.st_mtime));
     sprintf(line2, "Day %d-%d-%d  %s", gam[GAM_MONTH], gam[GAM_DAY],

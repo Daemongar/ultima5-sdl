@@ -7,6 +7,7 @@
 
 #include <string.h>
 
+#include "journal.h"
 #include "npc.h"
 #include "shoppes.h"
 #include "shoppes2.h"
@@ -535,6 +536,10 @@ static void TALK_04e2_PrintWord(void)
             local_6 = D_bce4[local_4] & 0x7f;
             local_4++;
 
+#if defined(ENABLE_JOURNAL)
+            JOURNAL_CaptureChar(local_6);
+#endif
+
             if (ULTIMA_1f12_GetCurrentTextX() != 0 || local_6 != 0x20)
             {
                 // c49a
@@ -934,6 +939,11 @@ static void TALK_0a2c_GetString(void)
     // The player has read everything up to their input; page from here.
     D_textLinesAdvanced = 0;
 #endif
+
+#if defined(ENABLE_JOURNAL)
+    // An answer to a question the person asked in their reply.
+    JOURNAL_AddAnswer(D_bcf8);
+#endif
 }
 
 // OK P1
@@ -963,6 +973,9 @@ static int TALK_0a54(byte param_1)
         }
 
         ULTIMA_1850_PrintString(_TEXT(0x93c2, "\"My name is "));
+#if defined(ENABLE_JOURNAL)
+        JOURNAL_CaptureText("\"My name is ");
+#endif
         if (TALK_07aa_ProcessNthTalkString(TALK_KEY_NAME) != 0)
         {
             return 1;
@@ -1033,6 +1046,10 @@ static int TALK_0b04(void)
     while (1)
     {
         D_4af2 = 0;
+#if defined(ENABLE_JOURNAL)
+        // The reply to the last question ends here.
+        JOURNAL_EndTopic();
+#endif
         ULTIMA_1850_PrintString(_TEXT(0x9408, "Your interest?\n:"));
         TALK_0a2c_GetString();
         if (D_bcf8[0] == 0)
@@ -1040,6 +1057,9 @@ static int TALK_0b04(void)
             ULTIMA_1850_PrintString(_TEXT(0x941a, "BYE\n\n"));
             return TALK_0a3c();
         }
+#if defined(ENABLE_JOURNAL)
+        JOURNAL_BeginTopic(D_bcf8);
+#endif
         TALK_04d2_PrintCr();
         TALK_04d2_PrintCr();
         for (local_4 = 0, local_6 = -1; local_4 < 0x22; local_4++)
@@ -1047,6 +1067,14 @@ static int TALK_0b04(void)
             local_8 = ULTIMA_6f1e((byte*)D_4aa8[local_4], D_bcf8);
             if (local_8 != -1 && (local_8 == 0 || D_bcf8[local_8 - 1] == ' '))
             {
+#if defined(ENABLE_JOURNAL)
+                // NAME, JOB and WORK are worth keeping; BYE, THANK and
+                // the rude words aren't.
+                if (local_4 > 2)
+                {
+                    JOURNAL_DiscardTopic();
+                }
+#endif
                 local_6 = TALK_0a54(local_4);
                 if (local_6 == 0)
                 {
@@ -1068,6 +1096,9 @@ static int TALK_0b04(void)
                 (ULTIMA_6f1e((byte*)"HINT", D_bcf8) != -1 ||
                  ULTIMA_6f1e((byte*)"?",    D_bcf8) != -1))
             {
+#if defined(ENABLE_JOURNAL)
+                JOURNAL_DiscardTopic();
+#endif
                 TALK_PrintKeywordHints();
             }
             else
@@ -1672,6 +1703,10 @@ static void TALK_127e_StartTalk(int param_1)
     D_textLinesAdvanced = 0;
 #endif
 
+#if defined(ENABLE_JOURNAL)
+    JOURNAL_BeginConversation(param_1);
+#endif
+
     if (TALK_111c() == 0)
     {
         if (TALK_0b04() == 0)
@@ -1679,6 +1714,11 @@ static void TALK_127e_StartTalk(int param_1)
             TALK_0a3c();
         }
     }
+
+#if defined(ENABLE_JOURNAL)
+    // A reply that ended the conversation.
+    JOURNAL_EndTopic();
+#endif
 
     TALK_1180();
 }
