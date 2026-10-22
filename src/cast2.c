@@ -1216,11 +1216,41 @@ static void CAST2_10fe_SaveGameIBM(void)
 
 // NOT MATCHING
 // based on FMT
-static void CAST2_10fe_SaveGameFMT(void)
+// Writes SAVED.GAM and SAVED.OOL: the Quit command's save, without its prompt.
+// Also used by the quicksave and save slot keys (save_slots.c).
+void CAST2_WriteSaveFiles(void)
 {
     byte local_4;
+
+    local_4 = D_a9bd[0];
+    if (D_a9bd[0] != 5)
+    {
+        ULTIMA_251e_SwitchDisks(1);
+    }
+
+    ULTIMA_256e_ReadFileFromDisk(/*0x4c138*/ "UNDER.OOL", D_b21e + 0x100, 0x100, 0);
+    ULTIMA_251e_SwitchDisks(1);
+    ULTIMA_256e_ReadFileFromDisk(/*0x4c144*/ "BRIT.OOL", D_b21e, 0x100, 0);
+    if (local_4 != 1)
+    {
+        ULTIMA_251e_SwitchDisks(3);
+        ULTIMA_25d8_WriteFileToDisk(/*0x4c150*/ "UNDER.OOL", D_b21e + 0x100, 0x100);
+    }
+
+    // DAT_0003ddb0_55a6 = (byte)DAT_00065334_CurrentBgm;
+    // DAT_0003ee18_6606 = (byte)DAT_00065338; // ?
+
+    ULTIMA_251e_SwitchDisks(3);
+    FILE_WriteSavegameFile(/*0x4c15c*/ "SAVED.GAM" /*, local_c*/);
+    ULTIMA_25d8_WriteFileToDisk(/*0x4c168*/ "SAVED.OOL", D_b21e, 0x200);
+    ULTIMA_251e_SwitchDisks(local_4);
+}
+
+// NOT MATCHING
+// based on FMT
+static void CAST2_10fe_SaveGameFMT(void)
+{
     byte local_6;
-    void* local_c;
 
     ULTIMA_1850_PrintString(_TEXT(0x4c114, "\nSave game? "));
 
@@ -1237,28 +1267,7 @@ static void CAST2_10fe_SaveGameFMT(void)
     else
     {
         ULTIMA_1850_PrintString(_TEXT(0x4c128, "Yes\nSaving...\n"));
-        local_4 = D_a9bd[0];
-        if (D_a9bd[0] != 5)
-        {
-            ULTIMA_251e_SwitchDisks(1);
-        }
-
-        ULTIMA_256e_ReadFileFromDisk(/*0x4c138*/ "UNDER.OOL", D_b21e + 0x100, 0x100, 0);
-        ULTIMA_251e_SwitchDisks(1);
-        ULTIMA_256e_ReadFileFromDisk(/*0x4c144*/ "BRIT.OOL", D_b21e, 0x100, 0);
-        if (local_4 != 1)
-        {
-            ULTIMA_251e_SwitchDisks(3);
-            ULTIMA_25d8_WriteFileToDisk(/*0x4c150*/ "UNDER.OOL", D_b21e + 0x100, 0x100);
-        }
-
-        // DAT_0003ddb0_55a6 = (byte)DAT_00065334_CurrentBgm;
-        // DAT_0003ee18_6606 = (byte)DAT_00065338; // ?
-
-        ULTIMA_251e_SwitchDisks(3);
-        FILE_WriteSavegameFile(/*0x4c15c*/ "SAVED.GAM" /*, local_c*/);
-        ULTIMA_25d8_WriteFileToDisk(/*0x4c168*/ "SAVED.OOL", D_b21e, 0x200);
-        ULTIMA_251e_SwitchDisks(local_4);
+        CAST2_WriteSaveFiles();
         ULTIMA_1850_PrintString(_TEXT(0x4c174, "Done.\n"));
     }
 }

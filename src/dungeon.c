@@ -11,6 +11,7 @@
 #include "dnglook.h"
 #include "dungeon.h"
 #include "endgame.h"
+#include "save_slots.h"
 #include "audio/aud_mus.h"
 
 void DNGLOOK_109e(int param_1);
@@ -483,6 +484,15 @@ static int DUNGEON_06c4_ProcessCommand(int param_1)
         ULTIMA_1850_PrintString(_TEXT(0x2d3e, "1.16"));
         ULTIMA_16ba_PrintChar(10);
         break;
+
+#if defined(ENABLE_SAVE_SLOTS)
+    case U5_KEY_QUICKSAVE:
+    case U5_KEY_QUICKLOAD:
+    case U5_KEY_SAVE_SLOT:
+    case U5_KEY_LOAD_SLOT:
+        SAVESLOTS_Command(param_1);
+        break;
+#endif
 
     case U5_KEY_LEFT:
     case U5_KEY_RIGHT:

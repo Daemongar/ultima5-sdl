@@ -153,6 +153,10 @@
 // ladders) moving when drawn from the full-color TILES.BMP atlas.
 //#define ENABLE_ANIMATED_COLOR_TILES 1
 
+// F5 quicksave, F9 quickload, and save slots: F6 saves to and F7 loads from
+// one of nine slots (see save_slots.c). The original kept a single save.
+//#define ENABLE_SAVE_SLOTS 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -184,6 +188,7 @@
 #define ENABLE_TERRAIN_FOOTSTEPS 1
 #define ENABLE_ANIMATED_COLOR_TILES 1
 #define ENABLE_SKIFF_RIVER_EXIT 1
+#define ENABLE_SAVE_SLOTS 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

@@ -42,6 +42,16 @@ static u16 KeyboardEventToUltimaKeycode(SDL_KeyboardEvent ev)
             return 0x1a; // return not used keycode
     }
 
+#if defined(ENABLE_SAVE_SLOTS)
+    switch (ev.key)
+    {
+    case SDLK_F5: return U5_KEY_QUICKSAVE;
+    case SDLK_F9: return U5_KEY_QUICKLOAD;
+    case SDLK_F6: return U5_KEY_SAVE_SLOT;
+    case SDLK_F7: return U5_KEY_LOAD_SLOT;
+    }
+#endif
+
     if (!(ev.key & (SDLK_SCANCODE_MASK | SDLK_EXTENDED_MASK)))
     {
         // ascii/unicode keypoint

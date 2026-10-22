@@ -74,6 +74,8 @@ Choose **Options** on the title menu, or press **F1** during play, to change set
 
 Press **F2** during play for a page listing the game's keyboard shortcuts; any key returns to the game. Press **F3** for the spells and their reagents, one circle per page (arrow keys turn the page). Two recipes, In Xen Mani and Rel Xen Bet, show `???`: they are learned from people in the game.
 
+Press **F5** at the command prompt to quicksave and **F9** to load the quicksave (it asks first). **F6** and **F7** open a screen of nine more save slots, to save to or load from: arrow keys or a number choose, Enter saves or loads, Esc goes back, and saving over a slot asks first. Each slot shows the party leader, their level, where the party is, the game date and when it was saved. The slots are folders in `SAVEGAME/` (`QUICK`, `SLOT1`-`SLOT9`) holding copies of `SAVED.GAM` and `SAVED.OOL`. Saving to a slot also saves the game as Quit does, and loading one makes it the game Journey Onward continues.
+
 Settings are stored in `ultima5.ini` in the game data directory:
 
 ```ini
@@ -199,6 +201,7 @@ Smarter monster targeting.
 The whole party earns experience for kills, with a bonus for fighting groups.
 Brighter nights outdoors.
 Esc opens the quit prompt.
+Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 Level-up stat gains are weighted by class.
 Bard mana rounds up.
 Vas Mani (Great Heal) works during combat.

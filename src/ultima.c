@@ -15,6 +15,7 @@
 #include "intro.h"
 #include "mainout.h"
 #include "outsubs.h"
+#include "save_slots.h"
 #include "town.h"
 
 #if !defined(TARGET_DOS16)
@@ -103,6 +104,16 @@ int CDECL main(int argc, char** argv/*, char** envp*/)
 #endif
 
     local_8 = 0;
+
+#if defined(ENABLE_SAVE_SLOTS)
+    // Loading a save slot during play (F7, F9) comes back here to start the
+    // main loop again from the loaded game.
+    if (setjmp(g_saveSlotsLoadJump) != 0)
+    {
+        SAVESLOTS_ResumeLoadedGame();
+        local_8 = 0;
+    }
+#endif
 
     // 00b8
     // main game loop

@@ -27,6 +27,13 @@
 #define U5_KEY_CTRL_S 0x13
 #define U5_KEY_CTRL_V 0x16
 
+// F5, F9, F6 and F7 (ENABLE_SAVE_SLOTS): unused control codes, so the
+// command prompts take them like Ctrl+K and other prompts ignore them.
+#define U5_KEY_QUICKSAVE 0x1c
+#define U5_KEY_QUICKLOAD 0x1d
+#define U5_KEY_SAVE_SLOT 0x1e
+#define U5_KEY_LOAD_SLOT 0x1f
+
 #define U5_KEY_BACKSPACE 8
 #define U5_KEY_ENTER 0xd
 #define U5_KEY_ESC 0x1b

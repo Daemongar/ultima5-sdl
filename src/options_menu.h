@@ -14,6 +14,12 @@ void OPTIONS_MENU_ShowShortcutsInGame(void);
 // Pages of spells and their reagents, one circle each, opened with F3.
 void OPTIONS_MENU_ShowSpellsInGame(void);
 
+#if defined(ENABLE_SAVE_SLOTS)
+// Screen of save slots, opened with F6 (saving) or F7 (loading). Returns the
+// chosen slot (SAVE_SLOT_QUICK or 1-9), or -1 if the player backed out.
+int OPTIONS_MENU_ChooseSaveSlot(bool loading);
+#endif
+
 // True while the Options or shortcuts screen is showing.
 bool OPTIONS_MENU_IsOpen(void);
 #endif

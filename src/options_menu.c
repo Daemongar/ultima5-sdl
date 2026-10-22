@@ -5,12 +5,14 @@
 #include "vars.h"
 
 #include "options_menu.h"
+#include "save_slots.h"
 #include "graphics/grap_buf.h"
 #include "key/key.h"
 #include "time/time.h"
 
 #if defined(TARGET_SDL)
 
+#include <stdio.h>
 #include <string.h>
 
 // Options screen reached from the title menu. Drawn with the game's font and
@@ -379,7 +381,8 @@ static char* s_otherKeys[] =
     "Ctrl+B Key buffer", "Ctrl+V Version",
     "Ctrl+E Exit game",  "F1     Options",
     "F2     This page",  "F3     Spells",
-    "F8     Reload tiles",
+    "F5     Quicksave",  "F9     Quickload",
+    "F8     Reload BMP", "F6/F7  Save/load",
 };
 
 #define SHORTCUT_LEFT_COLUMN 3
@@ -407,7 +410,7 @@ static void ShowShortcuts(void)
     DrawFrame();
     PrintCentered(1, "Keyboard Shortcuts");
     PrintTwoColumns(s_commandKeys, ARRAYSIZE(s_commandKeys), 3);
-    PrintTwoColumns(s_otherKeys, ARRAYSIZE(s_otherKeys), 16);
+    PrintTwoColumns(s_otherKeys, ARRAYSIZE(s_otherKeys), 15);
     PrintCentered(SCREEN_BOTTOM - 1, "Any key: done");
 
     ReadKey();
@@ -552,6 +555,144 @@ static void ShowSpells(void)
     g_presentFullScreenPage = false;
 }
 
+#if defined(ENABLE_SAVE_SLOTS)
+
+// Save slot screen (F6 and F7): the quicksave and slots 1-9, two rows each.
+#define SLOT_FIRST_ROW 3
+#define SLOT_LABEL_COLUMN 2
+#define SLOT_TEXT_COLUMN 6
+#define SLOT_TEXT_WIDTH (SCREEN_RIGHT - 1 - SLOT_TEXT_COLUMN)
+
+static bool s_slotLoading;
+static int s_chosenSlot;
+
+static void DrawSlotRow(int slot, bool selected)
+{
+    char line1[48];
+    char line2[48];
+    int y = SLOT_FIRST_ROW + slot * 2;
+
+    if (SAVESLOTS_Describe(slot, line1, line2) == 0)
+        strcpy(line1, "(empty)");
+
+    ULTIMA_1bf2_SetTextPosition(SLOT_LABEL_COLUMN, y);
+    if (selected)
+        ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+    ULTIMA_16ba_PrintChar(0x20);
+    ULTIMA_16ba_PrintChar(slot == SAVE_SLOT_QUICK ? 'Q' : '0' + slot);
+    ULTIMA_16ba_PrintChar(0x20);
+    if (selected)
+        ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+
+    ULTIMA_1bf2_SetTextPosition(SLOT_TEXT_COLUMN, y);
+    PrintPadded(line1, SLOT_TEXT_WIDTH);
+    ULTIMA_1bf2_SetTextPosition(SLOT_TEXT_COLUMN, y + 1);
+    PrintPadded(line2, SLOT_TEXT_WIDTH);
+}
+
+static void PrintSlotHelp(char* text)
+{
+    ULTIMA_1bf2_SetTextPosition(1, SCREEN_BOTTOM - 1);
+    PrintPadded("", SCREEN_RIGHT - 1);
+    PrintCentered(SCREEN_BOTTOM - 1, text);
+}
+
+static void ShowSaveSlots(void)
+{
+    char dummy[48];
+    char question[32];
+    time_t saved[SAVE_SLOT_COUNT];
+    int selected = s_slotLoading ? SAVE_SLOT_QUICK : 1;
+    char* help = s_slotLoading ? "Arrows: choose  Enter: load  Esc: back"
+                               : "Arrows: choose  Enter: save  Esc: back";
+
+    s_menuOpen = true;
+    g_presentFullScreenPage = true;
+    D_538e = 1;
+    s_chosenSlot = -1;
+
+    ULTIMA_1c22_SetTextWindowSize(0, 0, 0, SCREEN_RIGHT, SCREEN_BOTTOM);
+    ULTIMA_1b94_SelectTextWindow(0);
+    ULTIMA_0c22_GRAP_0f_SelectPage(0);
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    DrawFrame();
+    PrintCentered(1, s_slotLoading ? "Load Game" : "Save Game");
+
+    // Start on the most recent save: the one to load, or to save over again.
+    for (int slot = 0; slot < SAVE_SLOT_COUNT; slot++)
+    {
+        saved[slot] = SAVESLOTS_Describe(slot, dummy, dummy);
+        if (saved[slot] > saved[selected] && (s_slotLoading || slot != SAVE_SLOT_QUICK))
+            selected = slot;
+    }
+
+    for (int slot = 0; slot < SAVE_SLOT_COUNT; slot++)
+        DrawSlotRow(slot, slot == selected);
+    PrintSlotHelp(help);
+
+    for (;;)
+    {
+        int previous = selected;
+        int key = ULTIMA_2032_ToUpper(ReadKey());
+
+        if (key == U5_KEY_ESC)
+            break;
+
+        if (key == 'Q')
+            selected = SAVE_SLOT_QUICK;
+        else if (key >= '1' && key <= '9')
+            selected = key - '0';
+        else if (key == U5_KEY_UP || key == U5_KEY_LEFT)
+            selected = (selected + SAVE_SLOT_COUNT - 1) % SAVE_SLOT_COUNT;
+        else if (key == U5_KEY_DOWN || key == U5_KEY_RIGHT)
+            selected = (selected + 1) % SAVE_SLOT_COUNT;
+        else if (key != U5_KEY_ENTER && key != U5_KEY_SPACE)
+            continue;
+
+        if (selected != previous)
+        {
+            DrawSlotRow(previous, false);
+            DrawSlotRow(selected, true);
+        }
+
+        if (key != U5_KEY_ENTER && key != U5_KEY_SPACE)
+            continue;
+
+        if (s_slotLoading)
+        {
+            if (saved[selected] == 0)
+                continue;
+        }
+        else if (saved[selected] != 0)
+        {
+            if (selected == SAVE_SLOT_QUICK)
+                strcpy(question, "Replace the quicksave? (Y/N)");
+            else
+                sprintf(question, "Replace slot %d? (Y/N)", selected);
+            PrintSlotHelp(question);
+
+            while ((key = ULTIMA_2032_ToUpper(ReadKey())) != 'Y' && key != 'N' && key != U5_KEY_ESC)
+            {
+            }
+            if (key != 'Y')
+            {
+                PrintSlotHelp(help);
+                continue;
+            }
+        }
+
+        s_chosenSlot = selected;
+        break;
+    }
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    s_menuOpen = false;
+    g_presentFullScreenPage = false;
+}
+
+#endif
+
 bool OPTIONS_MENU_IsOpen(void)
 {
     return s_menuOpen;
@@ -621,5 +762,16 @@ void OPTIONS_MENU_ShowSpellsInGame(void)
 {
     RunOverGame(ShowSpells);
 }
+
+#if defined(ENABLE_SAVE_SLOTS)
+// Opened with F6 (saving) or F7 (loading) at a command prompt.
+int OPTIONS_MENU_ChooseSaveSlot(bool loading)
+{
+    s_slotLoading = loading;
+    s_chosenSlot = -1;
+    RunOverGame(ShowSaveSlots);
+    return s_chosenSlot;
+}
+#endif
 
 #endif

@@ -17,6 +17,7 @@ void CAST2_08ea(int param_1);
 void CAST2_08f8(int param_1, int param_2, int param_3);
 void CAST2_0e76_Shrine(void);
 void CAST2_10fe_SaveGame(void);
+void CAST2_WriteSaveFiles(void);
 
 #if defined(ENABLE_NO_WASTED_CASTS)
 // Set when the player backs out of a spell's target or direction prompt, so

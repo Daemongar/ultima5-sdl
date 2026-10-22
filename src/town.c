@@ -12,6 +12,7 @@
 #include "blckthrn.h"
 #include "cast2.h"
 #include "npc.h"
+#include "save_slots.h"
 #include "talk.h"
 #include "town.h"
 
@@ -1387,6 +1388,16 @@ void TOWN_141e_MainLoop(void)
                         ULTIMA_16ba_PrintChar(10);
                         local_c = 0;
                         break;
+
+#if defined(ENABLE_SAVE_SLOTS)
+                    case U5_KEY_QUICKSAVE:
+                    case U5_KEY_QUICKLOAD:
+                    case U5_KEY_SAVE_SLOT:
+                    case U5_KEY_LOAD_SLOT:
+                        SAVESLOTS_Command(local_8);
+                        local_c = 0;
+                        break;
+#endif
 
                     case U5_KEY_CTRL_S: // 1508 (96d8)
                         ULTIMA_1850_PrintString(_TEXT(0x28ae, "Sound "));
