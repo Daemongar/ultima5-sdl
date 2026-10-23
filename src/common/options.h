@@ -53,6 +53,7 @@ typedef struct Options
     bool mixRecipes;
     bool statDamage;
     bool karmaHint;
+    bool classPerks;
 } Options;
 
 extern Options g_options;

@@ -6,6 +6,7 @@
 #include "tiles.h"
 
 #include "cast.h"
+#include "class_perks.h"
 #include "cast2.h"
 #include "combat.h"
 #include "comsubs.h"
@@ -1059,7 +1060,7 @@ int CAST_0dba_CastSpellCmd(void)
 #if defined(ENABLE_NO_WASTED_CASTS)
     // The original used up the mixture before checking MP, and the MP before
     // checking level. Check both first so a cast that can't happen costs nothing.
-    if (g_options.noWastedCasts && D_55a8_party[local_6].mag < local_a)
+    if (g_options.noWastedCasts && D_55a8_party[local_6].mag < CLASS_SPELL_MP_COST(local_6, local_a))
     {
         ULTIMA_1850_PrintString(_TEXT(0x4647, "M.P. too low!\n"));
         return local_8;
@@ -1073,14 +1074,14 @@ int CAST_0dba_CastSpellCmd(void)
 #endif
 
     D_57f0[local_4]--;
-    if (D_55a8_party[local_6].mag < local_a)
+    if (D_55a8_party[local_6].mag < CLASS_SPELL_MP_COST(local_6, local_a))
     {
         ULTIMA_1850_PrintString(_TEXT(0x4647, "M.P. too low!\n"));
         local_c = 0;
     }
     else
     {
-        D_55a8_party[local_6].mag -= local_a;
+        D_55a8_party[local_6].mag -= CLASS_SPELL_MP_COST(local_6, local_a);
         local_c = -1;
         if (D_55a8_party[local_6].level < local_a)
         {
@@ -1286,7 +1287,7 @@ int CAST_0dba_CastSpellCmd(void)
     {
         g_castPromptCancelled = 0;
         D_57f0[local_4]++;
-        D_55a8_party[local_6].mag += local_a;
+        D_55a8_party[local_6].mag += CLASS_SPELL_MP_COST(local_6, local_a);
         ULTIMA_2900_UpdateVitalsDisplay();
         local_c = -1;
     }

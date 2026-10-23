@@ -83,7 +83,7 @@ The game data can't be included in the repository, so the tests run on your own 
 
 ### Settings
 
-Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound and Gameplay pages, and Esc saves and returns. Display and sound changes apply immediately.
+Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound, Gameplay and Combat pages, and Esc saves and returns. Display and sound changes apply immediately.
 
 Press **F2** during play for a page listing the game's keyboard shortcuts; any key returns to the game. Press **F3** for the spells and their reagents, one circle per page (arrow keys turn the page). Two recipes, In Xen Mani and Rel Xen Bet, show `???`: they are learned from people in the game.
 
@@ -226,6 +226,7 @@ Karma hint: the Z-stats equipment page shows karma as a word (Lost, Strayed, See
 Recipe helper: when mixing, the spell's reagents from the spell book are already ticked if you have them all, and "How much?" says how many you can make. In Xen Mani and Rel Xen Bet, learned in the game, stay manual.
 Level-up stat gains are weighted by class.
 Stat-based damage: a party member's weapon rolls from a minimum set by Strength (close weapons) or Dexterity (bows, slings and thrown weapons) up to the weapon's usual maximum: 1 up to a stat of 12, 3 at 20, 5 at 25, 6 at 30. The original rolled 1 to the maximum whatever the wielder's stats; monsters are unchanged.
+Class perks: fighters hit more often with close weapons and bards with bows, slings and thrown weapons (as if their Dexterity were 6 higher), bards pick locks better, and mages pay 1 MP less for spells above the first circle. Imported Ultima IV classes follow the nearest class (Paladins and Tinkers as fighters, Rangers as bards, Druids as mages); the Avatar and Shepherds have none. In the original the classes differed only in their stats. On the Options Combat page (`class_perks`).
 Bard mana rounds up.
 Vas Mani (Great Heal) works during combat.
 Casting a spell you lack the MP or level for no longer uses up the mixture or MP ("M.P. too low!" / "Level too low!").

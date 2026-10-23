@@ -38,6 +38,7 @@ enum
     PAGE_DISPLAY,
     PAGE_SOUND,
     PAGE_GAMEPLAY,
+    PAGE_COMBAT,
     PAGE_COUNT,
 };
 
@@ -73,17 +74,17 @@ static OptionItem s_items[] =
     {PAGE_SOUND, ITEM_TOGGLE, "Enhanced effects", &g_options.enhancedSounds, NULL},
     {PAGE_SOUND, ITEM_TOGGLE, "Terrain footsteps", &g_options.terrainFootsteps, NULL},
 
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Mouse aiming", &g_options.mouseAim, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Mouse aiming", &g_options.mouseAim, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Dialog improvements", &g_options.dialogImprovements, NULL},
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Smarter monsters", &g_options.smarterAi, NULL},
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Party shares exp.", &g_options.partyExp, NULL},
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Group exp. bonus", &g_options.groupExpBonus, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Smarter monsters", &g_options.smarterAi, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Party shares exp.", &g_options.partyExp, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Group exp. bonus", &g_options.groupExpBonus, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Brighter nights", &g_options.brighterNight, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Esc asks to quit", &g_options.quickExit, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Climbing costs time", &g_options.terrainElevation, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Class stat growth", &g_options.classStatGrowth, NULL},
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Varied battlefields", &g_options.variedCombat, NULL},
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Vas Mani in combat", &g_options.vasManiInCombat, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Varied battlefields", &g_options.variedCombat, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Vas Mani in combat", &g_options.vasManiInCombat, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "No wasted casts", &g_options.noWastedCasts, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Inn poison not fatal", &g_options.noInnPoisonDeath, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Stat point per level", &g_options.statPerLevel, NULL},
@@ -93,11 +94,14 @@ static OptionItem s_items[] =
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Recipe helper", &g_options.mixRecipes, NULL},
 #endif
 #if defined(ENABLE_STAT_DAMAGE)
-    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Stat-based damage", &g_options.statDamage, NULL},
+    {PAGE_COMBAT, ITEM_TOGGLE, "Stat-based damage", &g_options.statDamage, NULL},
+#endif
+#if defined(ENABLE_CLASS_PERKS)
+    {PAGE_COMBAT, ITEM_TOGGLE, "Class perks", &g_options.classPerks, NULL},
 #endif
 };
 
-static char* s_pageNames[PAGE_COUNT] = {"Display", "Sound", "Gameplay"};
+static char* s_pageNames[PAGE_COUNT] = {"Display", "Sound", "Gameplay", "Combat"};
 static char* s_windowModeNames[] = {"Fullscreen", "Bordered", "Windowed"};
 
 #define SCREEN_RIGHT 0x27
@@ -185,9 +189,14 @@ static void DrawStatic(void)
     PrintCentered(SCREEN_BOTTOM - 1, "Arrows: change  Tab: page  Esc: done");
 }
 
+// The page names in a row, centered, one space between them.
 static void DrawTabs(int page)
 {
-    int x = 6;
+    int width = PAGE_COUNT - 1;
+    for (int p = 0; p < PAGE_COUNT; p++)
+        width += (int)strlen(s_pageNames[p]) + 2;
+
+    int x = (SCREEN_RIGHT + 1 - width) / 2;
     for (int p = 0; p < PAGE_COUNT; p++)
     {
         ULTIMA_1bf2_SetTextPosition(x, 3);
@@ -198,7 +207,7 @@ static void DrawTabs(int page)
         ULTIMA_16ba_PrintChar(0x20);
         if (p == page)
             ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
-        x += (int)strlen(s_pageNames[p]) + 4;
+        x += (int)strlen(s_pageNames[p]) + 3;
     }
 }
 

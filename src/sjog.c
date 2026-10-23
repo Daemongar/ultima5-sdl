@@ -8,6 +8,7 @@
 #include "comsubs.h"
 #include "dungeon.h"
 #include "endgame.h"
+#include "class_perks.h"
 #include "sjog.h"
 
 #include "town.h"
@@ -793,7 +794,7 @@ static void SJOG_0baa(int a, int b, int c, int param_4)
         }
         else
         {
-            local_6 = (((local_4 & 0x7f) - D_55a8_party[local_8].dex + 0x1e) >> 1) & 0xff;
+            local_6 = (((local_4 & 0x7f) - CLASS_LOCKPICK_DEX(local_8) + 0x1e) >> 1) & 0xff;
             if (local_6 < ULTIMA_2092_RandomRange(1, 0x1e))
             {
                 ULTIMA_1850_PrintString(_TEXT(0x8a64, "Success!\n"));
@@ -827,7 +828,7 @@ static void SJOG_0c3e_JimmyInDungeon(void)
     local_8 = D_5896_map_x;
     local_a = D_5897_map_y;
     local_e = GetDungeonMap(local_8 & 7, local_a & 7, (uint)D_5895_map_level);
-    local_4 = D_55a8_party[local_c].dex;
+    local_4 = CLASS_LOCKPICK_DEX(local_c);
     local_6 = (D_5895_map_level * 2 - local_4 + 0x1e) >> 1;
 
     if ((local_e & 0xf7) == 0x40)
@@ -914,7 +915,7 @@ void SJOG_0d4a_JimmyCmd(void)
             break;
         }
 
-        if (D_55a8_party[local_c].dex <= ULTIMA_2092_RandomRange(0, 0x1d))
+        if (CLASS_LOCKPICK_DEX(local_c) <= ULTIMA_2092_RandomRange(0, 0x1d))
         {
             ULTIMA_1850_PrintString(_TEXT(0x8ada, "Key broke!\n"));
             D_57ac--;
@@ -950,7 +951,7 @@ void SJOG_0d4a_JimmyCmd(void)
             break;
         }
 
-        if (D_55a8_party[local_c].dex <= ULTIMA_2092_RandomRange(0, 0x1d))
+        if (CLASS_LOCKPICK_DEX(local_c) <= ULTIMA_2092_RandomRange(0, 0x1d))
         {
             // cdef -> cd72
             ULTIMA_1850_PrintString(_TEXT(0x8b10, "Key broke!\n"));

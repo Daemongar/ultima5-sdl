@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "cast.h"
+#include "class_perks.h"
 #include "cmds.h"
 #include "combat.h"
 #include "comsubs.h"
@@ -1512,6 +1513,25 @@ int COMBAT_13e2(int param_1, int param_2)
     // sic
 }
 
+#if defined(ENABLE_CLASS_PERKS)
+// Extra Dexterity for a party member's weapon hit roll: fighters with close
+// weapons, bards with ranged ones (D_169c, the weapon's range).
+static int COMBAT_ClassHitBonus(int attacker, int weapon)
+{
+    int role;
+
+    if ((D_ba14[attacker].flags & COMBAT_FLAGS_PLAYER) == 0 || weapon < 0 || weapon >= 0x30)
+        return 0;
+
+    role = CLASS_Role(D_55a8_party[D_ba14[attacker].entityIdx].cls);
+    if (role == CLASS_ROLE_FIGHTER && D_169c[weapon] == 0)
+        return CLASS_PERK_DEX_BONUS;
+    if (role == CLASS_ROLE_BARD && D_169c[weapon] != 0)
+        return CLASS_PERK_DEX_BONUS;
+    return 0;
+}
+#endif
+
 // OK P1
 int COMBAT_14d6(int param_1, int param_2, int param_3, int param_4)
 {
@@ -1555,6 +1575,12 @@ int COMBAT_14d6(int param_1, int param_2, int param_3, int param_4)
         CHECK_UNINITIALIZED_16(local_8);
         local_8 = COMBAT_13e2(param_1, local_8);
         local_a = COMBAT_13e2(param_2, local_a);
+#if defined(ENABLE_CLASS_PERKS)
+        if (D_588f == 0)
+        {
+            local_8 += COMBAT_ClassHitBonus(param_1, param_4);
+        }
+#endif
         local_4 = ((local_8 - local_a) + 0x1e) / 2;
         if (local_4 <= ULTIMA_3abe())
         {

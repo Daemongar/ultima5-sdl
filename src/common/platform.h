@@ -186,6 +186,11 @@
 // that pick Lord British's messages. The original showed it only with Ctrl+K.
 //#define ENABLE_KARMA_HINT 1
 
+// Class perks: fighters hit more often with close weapons, bards with ranged
+// ones and pick locks better, mages pay 1 MP less above the first circle (see
+// class_perks.h). In the original the classes differed only in their stats.
+//#define ENABLE_CLASS_PERKS 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -225,6 +230,7 @@
 #define ENABLE_HOVER_NAMES 1
 #define ENABLE_STAT_DAMAGE 1
 #define ENABLE_KARMA_HINT 1
+#define ENABLE_CLASS_PERKS 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

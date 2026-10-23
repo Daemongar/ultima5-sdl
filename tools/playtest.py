@@ -44,8 +44,12 @@ DUNGEON_MAP = 0x3b4       # D_595a, 8 levels of 8x8 cells
 OBJECTS = 0x6b4           # D_5c5a, 32 objects of 8 bytes
 FACING = 0x105d           # D_6603
 
+PARTY_COUNT = 0x2b5       # D_585b
+MARIAH = 0x002 + 3 * 0x20 # party record 3, a mage in INIT.GAM
+
 GINSENG, SPIDER_SILK = 1, 3
 SPELL_MANI = 4
+SPELL_IN_XEN_MANI = 11
 DESPISE = 0x22            # map ID; dungeon 1 in AUTOMAP.DAT
 
 # Skip the title sequence and choose Journey Onward.
@@ -214,6 +218,22 @@ def check_dungeon_map(game):
     check(sum(bin(b).count("1") for b in data) == seen, "cells outside Despise level 1 were marked")
 
 
+def setup_mage(game):
+    # Mariah the mage (party record 3) joins, with an In Xen Mani mixed: a
+    # 2nd-circle spell that needs no target and works anywhere.
+    game.gam[PARTY_COUNT] = 4
+    game.gam[MIXED_SPELLS + SPELL_IN_XEN_MANI] = 1
+    game.mariah_mp = game.gam[MARIAH + 0x0f]
+
+
+def check_mage_cost(game):
+    gam = game.saved()
+    check(game.saved_by_game(), "Quit didn't write SAVED.GAM")
+    check(gam[MIXED_SPELLS + SPELL_IN_XEN_MANI] == 0, "In Xen Mani wasn't cast")
+    spent = game.mariah_mp - gam[MARIAH + 0x0f]
+    check(spent == 1, f"expected Mariah to spend 1 MP on a 2nd-circle spell, she spent {spent}")
+
+
 TESTS = [
     ("save_and_quit", "a new game starts and Q saves it",
      setup_none, START + " q y", check_saved),
@@ -225,6 +245,8 @@ TESTS = [
      setup_reagents, START + " m m enter m 3 enter q y", check_mixed),
     ("dungeon_map", "the dungeon map records what the torch shows",
      setup_dungeon, START + " f10 wait 500 esc", check_dungeon_map),
+    ("class_perks", "a mage pays 1 MP less for a 2nd-circle spell",
+     setup_mage, START + " c down down down enter i x m enter wait 1500 q y", check_mage_cost),
 ]
 
 

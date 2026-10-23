@@ -53,6 +53,9 @@ static OptionFlag s_flags[] =
 #if defined(ENABLE_KARMA_HINT)
     {"display", "karma_hint", &g_options.karmaHint, true},
 #endif
+#if defined(ENABLE_CLASS_PERKS)
+    {"gameplay", "class_perks", &g_options.classPerks, true},
+#endif
 };
 
 static const char* s_windowModeNames[] = {"fullscreen", "bordered", "windowed"};
