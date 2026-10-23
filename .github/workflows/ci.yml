@@ -20,7 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build tools and SDL's system libraries
+      # Ubuntu doesn't package SDL3 yet, so build it as the README describes
+      # and keep the result for later runs.
+      - name: Restore SDL3 and SDL3_mixer
+        id: sdl-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: sdl-${{ runner.os }}-ubuntu-24.04-${{ env.SDL_VERSION }}-mixer-${{ env.SDL_MIXER_VERSION }}
+
+      # Only building SDL needs these; the compiler, make, pkg-config, cmake
+      # and ninja come with the runner image, and installing the rest can
+      # take many minutes.
+      - name: Install SDL's system libraries
+        if: steps.sdl-cache.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -31,15 +44,6 @@ jobs:
             libwayland-dev wayland-protocols libdecor-0-dev \
             libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev \
             libdbus-1-dev libudev-dev
-
-      # Ubuntu doesn't package SDL3 yet, so build it as the README describes
-      # and keep the result for later runs.
-      - name: Restore SDL3 and SDL3_mixer
-        id: sdl-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.local
-          key: sdl-${{ runner.os }}-ubuntu-24.04-${{ env.SDL_VERSION }}-mixer-${{ env.SDL_MIXER_VERSION }}
 
       - name: Build SDL3 and SDL3_mixer
         if: steps.sdl-cache.outputs.cache-hit != 'true'
