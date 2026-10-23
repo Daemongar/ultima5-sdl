@@ -155,10 +155,10 @@ drivers do not load this SDL-specific atlas.
 The included `TILES.BMP` (64x64 tiles) is generated from the original `TILES.16` by `tools/upscale_tiles.py` (requires Pillow and NumPy):
 
 ```sh
-python3 tools/upscale_tiles.py /path/to/TILES.16 TILES.BMP --scale 4 --header src/graphics/tile_colors.h
+python3 tools/upscale_tiles.py /path/to/TILES.16 TILES.BMP --scale 4 --transparent --algorithm xbr --keep TILES.BMP --header src/graphics/tile_colors.h
 ```
 
-It enlarges each tile with Scale2x applied twice (`--scale 2`, the default, applies it once for 32x32 tiles) to round off diagonal edges, and recolors it with a softened palette and light top/bottom shading, keeping the original black backgrounds. It is meant as a starting point for hand-drawn detail. Copy the result into the game data directory. `--header` also regenerates `src/graphics/tile_colors.h`, the palette the game uses for animated tiles; rebuild after changing it.
+It enlarges each tile with an upscaler applied twice (`--scale 2`, the default, applies it once for 32x32 tiles) to round off diagonal edges: `--algorithm xbr`, used for the included sheet, weighs the colors around each edge for smoother diagonals while keeping single-pixel details, and `scale2x` (the default) is simpler. It then recolors each tile with a softened palette and light top/bottom shading, keeping the original black backgrounds. It is meant as a starting point for hand-drawn detail: `--keep TILES.BMP` copies every tile of an existing sheet that isn't the script's own output, so hand-drawn tiles survive regenerating the rest. Copy the result into the game data directory. `--header` also regenerates `src/graphics/tile_colors.h`, the palette the game uses for animated tiles; rebuild after changing it.
 
 Animated tiles (water, lava, flags, fireplaces, shorelines, the clock) keep moving in full color with `ENABLE_ANIMATED_COLOR_TILES`: water and lava scroll their atlas tiles, and any other tile the game rewrites is rendered in full color from its current data.
 
