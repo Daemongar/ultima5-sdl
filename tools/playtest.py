@@ -267,6 +267,20 @@ def check_drips(game):
     check(played[:1] == [AMBIENCE_DRIPS], f"expected dripping water in the dungeon, the ambience was {played}")
 
 
+def check_moved_west(game):
+    gam = game.saved()
+    check(game.saved_by_game(), "Quit didn't write SAVED.GAM")
+    check(gam[MAP_X] == game.gam[MAP_X] - 1 and gam[MAP_Y] == game.gam[MAP_Y],
+          f"expected the d-pad to move the party one square west, it went from "
+          f"{game.gam[MAP_X]},{game.gam[MAP_Y]} to {gam[MAP_X]},{gam[MAP_Y]}")
+
+
+# The gamepad's key menu (Y) is a grid of 3 columns starting on A; Q is
+# 5 rows down and 1 across, and Y 3 rows further down and 2 across from Q.
+PAD_TO_Q = " pad down" * 5 + " pad right"
+PAD_Q_TO_Y = " pad down" * 2 + " pad right" * 2
+
+
 TESTS = [
     ("save_and_quit", "a new game starts and Q saves it",
      setup_none, START + " q y", check_saved),
@@ -284,6 +298,10 @@ TESTS = [
      setup_coast, START + " wait 2000", check_surf),
     ("ambience_dungeon", "a dungeon plays dripping water",
      setup_dungeon, START + " wait 2000", check_drips),
+    ("gamepad_move", "the gamepad's d-pad walks the party",
+     setup_coast, START + " pad left wait 500 q y", check_moved_west),
+    ("gamepad_quit", "Quit and Yes picked from the gamepad's key menu",
+     setup_none, START + " pad y" + PAD_TO_Q + " pad a pad y" + PAD_Q_TO_Y + " pad a", check_saved),
 ]
 
 

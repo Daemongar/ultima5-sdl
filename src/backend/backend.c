@@ -20,6 +20,10 @@ bool BACKEND_Initialize(void)
 
 #if defined(TARGET_SDL)
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
+#if defined(ENABLE_GAMEPAD)
+    // Gamepads already plugged in arrive as SDL_EVENT_GAMEPAD_ADDED.
+    SDL_InitSubSystem(SDL_INIT_GAMEPAD);
+#endif
 #endif
 
     GRAP_Initialize();

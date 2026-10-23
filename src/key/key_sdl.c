@@ -3,6 +3,9 @@
 #include "graphics/grap_buf.h"
 #include "options_menu.h"
 #include "playtest.h"
+#include "gamepad.h"
+
+#include <string.h>
 #include "vars.h"
 #include "macros.h"
 
@@ -114,6 +117,21 @@ static u16 KeyboardEventToUltimaKeycode(SDL_KeyboardEvent ev)
 // F1 opens the Options screen, F2 the shortcuts screen, F3 the spells screen,
 // F4 the journal and F10 the dungeon map the next time the game waits for a key.
 static int s_screenRequested;
+
+#if defined(ENABLE_GAMEPAD)
+// The gamepad's key menu (Y), opened like the screens above; it isn't an SDL
+// key code, so it can't clash with one.
+#define SCREEN_PAD_KEYS 1
+
+// Keys picked from the key menu, given to the game one at a time.
+static u16 s_padQueue[32];
+static int s_padQueueCount;
+
+void KEY_SDL_RequestPadMenu(void)
+{
+    s_screenRequested = SCREEN_PAD_KEYS;
+}
+#endif
 
 extern void GRAP_SDL_ReloadColorTiles(void);
 
@@ -229,6 +247,21 @@ int KEY_PollKey(void)
 
 	EVT_Yield();
 
+#if defined(ENABLE_GAMEPAD)
+    // The next key picked from the gamepad's key menu.
+    if (s_screenRequested == 0 && s_lastDownKeycode == 0 && s_padQueueCount > 0)
+    {
+        s_lastDownKeycode = s_padQueue[0];
+        memmove(s_padQueue, s_padQueue + 1, --s_padQueueCount * sizeof(s_padQueue[0]));
+    }
+
+    // A held direction repeats.
+    if (s_lastDownKeycode == 0)
+    {
+        GAMEPAD_Tick();
+    }
+#endif
+
 #if defined(ENABLE_PLAYTEST)
     // A script's next key, when the game has none waiting.
     if (s_screenRequested == 0 && s_lastDownKeycode == 0)
@@ -259,6 +292,10 @@ int KEY_PollKey(void)
 #if defined(ENABLE_AUTOMAP)
         else if (screen == SDLK_F10)
             OPTIONS_MENU_ShowAutomapInGame();
+#endif
+#if defined(ENABLE_GAMEPAD)
+        else if (screen == SCREEN_PAD_KEYS)
+            s_padQueueCount = OPTIONS_MENU_ChooseKeys(s_padQueue, ARRAYSIZE(s_padQueue));
 #endif
         return 0;
     }

@@ -11,15 +11,18 @@
 
 #include "funcs.h"
 #include "hover.h"
+#include "key/gamepad.h"
 
 // Scripted play for tools/playtest.py. A script is a list of tokens separated
 // by spaces or new lines; '#' starts a comment. Each token is one key press,
 // given to the game the next time it looks for a key (so none are lost while
 // it's busy), or "wait N" to let N milliseconds pass first, or "mouse X Y"
-// to put the mouse pointer at X, Y in the window (for the names under it):
+// to put the mouse pointer at X, Y in the window (for the names under it),
+// or "pad BUTTON" to press and release a gamepad button, given like a key:
 //
 //   a-z 0-9    that key
 //   ENTER ESC SPACE BACKSPACE TAB UP DOWN LEFT RIGHT PGUP PGDN F1-F10
+//   pad: A B X Y UP DOWN LEFT RIGHT START BACK LB RB
 //
 // When the script runs out the game exits with status 0.
 
@@ -32,6 +35,7 @@ enum
     STEP_KEY,
     STEP_WAIT,
     STEP_MOUSE,
+    STEP_PAD,
 };
 
 typedef struct ScriptStep
@@ -40,7 +44,22 @@ typedef struct ScriptStep
     SDL_Keycode key;
     Uint64 waitMs;
     float mouseX, mouseY;
+    int button; // SDL_GamepadButton, for STEP_PAD
 } ScriptStep;
+
+static const struct
+{
+    const char* name;
+    int button;
+} s_padNames[] =
+{
+    {"A", SDL_GAMEPAD_BUTTON_SOUTH}, {"B", SDL_GAMEPAD_BUTTON_EAST},
+    {"X", SDL_GAMEPAD_BUTTON_WEST}, {"Y", SDL_GAMEPAD_BUTTON_NORTH},
+    {"UP", SDL_GAMEPAD_BUTTON_DPAD_UP}, {"DOWN", SDL_GAMEPAD_BUTTON_DPAD_DOWN},
+    {"LEFT", SDL_GAMEPAD_BUTTON_DPAD_LEFT}, {"RIGHT", SDL_GAMEPAD_BUTTON_DPAD_RIGHT},
+    {"START", SDL_GAMEPAD_BUTTON_START}, {"BACK", SDL_GAMEPAD_BUTTON_BACK},
+    {"LB", SDL_GAMEPAD_BUTTON_LEFT_SHOULDER}, {"RB", SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER},
+};
 
 static ScriptStep s_steps[MAX_TOKENS];
 static int s_stepCount;
@@ -90,6 +109,7 @@ static void LoadScript(const char* path)
     char line[512];
     FILE* stream = fopen(path, "r");
     bool waitNext = false;
+    bool padNext = false;
     int mouseArgs = 0; // coordinates still to read for "mouse"
 
     if (!stream)
@@ -139,9 +159,28 @@ static void LoadScript(const char* path)
                 waitNext = true;
                 continue;
             }
+            else if (padNext)
+            {
+                int i;
+                for (i = 0; i < ARRAYSIZE(s_padNames); i++)
+                {
+                    if (SDL_strcasecmp(token, s_padNames[i].name) == 0)
+                        break;
+                }
+                if (i == ARRAYSIZE(s_padNames))
+                    Fail(path, "unknown gamepad button", token);
+                step->kind = STEP_PAD;
+                step->button = s_padNames[i].button;
+                padNext = false;
+            }
             else if (SDL_strcasecmp(token, "mouse") == 0)
             {
                 mouseArgs = 2;
+                continue;
+            }
+            else if (SDL_strcasecmp(token, "pad") == 0)
+            {
+                padNext = true;
                 continue;
             }
             else if ((step->key = TokenKey(token)) == 0)
@@ -182,7 +221,7 @@ void PLAYTEST_FeedKey(void)
     if (!s_active || SDL_GetTicks() < s_waitUntil)
         return;
 
-    while (s_next < s_stepCount && s_steps[s_next].kind != STEP_KEY)
+    while (s_next < s_stepCount && s_steps[s_next].kind != STEP_KEY && s_steps[s_next].kind != STEP_PAD)
     {
         ScriptStep* step = &s_steps[s_next++];
 
@@ -206,11 +245,21 @@ void PLAYTEST_FeedKey(void)
         exit(0);
     }
 
+    ScriptStep* step = &s_steps[s_next++];
+    if (step->kind == STEP_PAD)
+    {
+#if defined(ENABLE_GAMEPAD)
+        GAMEPAD_Button((SDL_GamepadButton)step->button, true);
+        GAMEPAD_Button((SDL_GamepadButton)step->button, false);
+#endif
+        return;
+    }
+
     SDL_KeyboardEvent ev;
     SDL_zero(ev);
     ev.type = SDL_EVENT_KEY_DOWN;
     ev.down = true;
-    ev.key = s_steps[s_next++].key;
+    ev.key = step->key;
     KEY_SDL_ProcessKeyDown(ev);
 }
 

@@ -24,6 +24,12 @@ void OPTIONS_MENU_ShowJournalInGame(void);
 void OPTIONS_MENU_ShowAutomapInGame(void);
 #endif
 
+#if defined(ENABLE_GAMEPAD)
+// The gamepad's key menu: the keys picked go in keys, up to max; returns
+// how many (0 if the player backed out).
+int OPTIONS_MENU_ChooseKeys(u16* keys, int max);
+#endif
+
 #if defined(ENABLE_SAVE_SLOTS)
 // Screen of save slots, opened with F6 (saving) or F7 (loading). Returns the
 // chosen slot (SAVE_SLOT_QUICK or 1-9), or -1 if the player backed out.

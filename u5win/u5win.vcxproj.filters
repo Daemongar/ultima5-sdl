@@ -212,6 +212,9 @@
     <ClCompile Include="..\src\key\key_sdl.c">
       <Filter>key</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\key\gamepad_sdl.c">
+      <Filter>key</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\time\pctimer.c">
       <Filter>time</Filter>
     </ClCompile>
@@ -375,6 +378,9 @@
     </ClInclude>
     <ClInclude Include="..\src\playtest.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\key\gamepad.h">
+      <Filter>key</Filter>
     </ClInclude>
     <ClInclude Include="..\src\hover.h">
       <Filter>src</Filter>

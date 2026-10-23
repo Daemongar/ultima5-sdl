@@ -4,6 +4,7 @@
 
 #include "event.h"
 #include "hover.h"
+#include "key/gamepad.h"
 
 #include <SDL3/SDL.h>
 
@@ -53,6 +54,16 @@ void EVT_PollMessages(void)
 				KEY_SDL_ProcessMouseMotion(ev.motion);
 #endif
 			break;
+
+#if defined(ENABLE_GAMEPAD)
+		case SDL_EVENT_GAMEPAD_ADDED:
+		case SDL_EVENT_GAMEPAD_REMOVED:
+		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+		case SDL_EVENT_GAMEPAD_BUTTON_UP:
+		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+			GAMEPAD_HandleEvent(&ev);
+			break;
+#endif
 
 #if defined(ENABLE_HOVER_NAMES)
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:

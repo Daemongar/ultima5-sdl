@@ -303,6 +303,7 @@ exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\key\key_sdl.c" />
+    <ClCompile Include="..\src\key\gamepad_sdl.c" />
     <ClCompile Include="..\src\lookobj.c" />
     <ClCompile Include="..\src\mainout.c" />
     <ClCompile Include="..\src\npc.c" />
@@ -371,6 +372,7 @@ exit /b 0</Command>
     <ClInclude Include="..\src\journal.h" />
     <ClInclude Include="..\src\automap.h" />
     <ClInclude Include="..\src\playtest.h" />
+    <ClInclude Include="..\src\key\gamepad.h" />
     <ClInclude Include="..\src\hover.h" />
     <ClInclude Include="..\src\ambience.h" />
     <ClInclude Include="..\src\map_name.h" />

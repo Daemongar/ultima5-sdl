@@ -199,6 +199,10 @@
 // (smooth_scroll, off by default; see SmoothScroll in graphics/grap_sdl.c).
 //#define ENABLE_SMOOTH_SCROLL 1
 
+// Gamepads, as the keys the game reads; Y opens a menu of keys for commands
+// and words (see key/gamepad_sdl.c).
+//#define ENABLE_GAMEPAD 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -241,6 +245,7 @@
 #define ENABLE_CLASS_PERKS 1
 #define ENABLE_AMBIENCE 1
 #define ENABLE_SMOOTH_SCROLL 1
+#define ENABLE_GAMEPAD 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

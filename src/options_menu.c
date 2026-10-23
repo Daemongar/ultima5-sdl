@@ -1382,6 +1382,161 @@ static void ShowAutomap(void)
 
 #endif
 
+#if defined(ENABLE_GAMEPAD)
+
+// The gamepad's key menu (Y): every key the game asks for, in a grid, so a
+// command, an answer or a word can be entered without a keyboard.
+#define PAD_KEYS_COLUMNS 3
+#define PAD_KEYS_ROWS 13
+#define PAD_KEYS_FIRST_ROW 3
+#define PAD_KEYS_CELL_WIDTH 12
+#define PAD_KEYS_TYPED_ROW (PAD_KEYS_FIRST_ROW + PAD_KEYS_ROWS + 1)
+#define PAD_KEY_DELETE 0x7f // in the grid only; given to the game as Backspace
+
+typedef struct PadKey
+{
+    u16 key;
+    char* label;
+} PadKey;
+
+static PadKey s_padKeys[PAD_KEYS_COLUMNS * PAD_KEYS_ROWS] =
+{
+    {'a', "A Attack"},  {'b', "B Board"},   {'c', "C Cast"},
+    {'d', "D"},         {'e', "E Enter"},   {'f', "F Fire"},
+    {'g', "G Get"},     {'h', "H Hole up"}, {'i', "I Ignite"},
+    {'j', "J Jimmy"},   {'k', "K Klimb"},   {'l', "L Look"},
+    {'m', "M Mix"},     {'n', "N New order"}, {'o', "O Open"},
+    {'p', "P Push"},    {'q', "Q Quit"},    {'r', "R Ready"},
+    {'s', "S Search"},  {'t', "T Talk"},    {'u', "U Use"},
+    {'v', "V View"},    {'w', "W"},         {'x', "X X-it"},
+    {'y', "Y Yell/Yes"}, {'z', "Z Z-stats"}, {'0', "0"},
+    {'1', "1"},         {'2', "2"},         {'3', "3"},
+    {'4', "4"},         {'5', "5"},         {'6', "6"},
+    {'7', "7"},         {'8', "8"},         {'9', "9"},
+    {U5_KEY_SPACE, "Space"}, {PAD_KEY_DELETE, "Delete"}, {U5_KEY_ENTER, "Enter"},
+};
+
+static int s_padKeyCount;
+static int s_padKeyMax;
+static u16* s_padKeyOut;
+
+static void DrawPadKey(int index, bool selected)
+{
+    int column = index % PAD_KEYS_COLUMNS;
+    int row = index / PAD_KEYS_COLUMNS;
+
+    ULTIMA_1bf2_SetTextPosition(2 + column * PAD_KEYS_CELL_WIDTH, PAD_KEYS_FIRST_ROW + row);
+    if (selected)
+        ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+    ULTIMA_16ba_PrintChar(0x20);
+    PrintPadded(s_padKeys[index].label, PAD_KEYS_CELL_WIDTH - 2);
+    if (selected)
+        ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
+}
+
+static void DrawPadTyped(void)
+{
+    char text[48] = "Typed: ";
+    int length = (int)strlen(text);
+
+    for (int i = 0; i < s_padKeyCount && length < (int)sizeof(text) - 2; i++)
+    {
+        u16 key = s_padKeyOut[i];
+        text[length++] = key == U5_KEY_BACKSPACE ? '<' : (char)ULTIMA_2032_ToUpper((u8)key);
+    }
+    text[length++] = '_';
+    text[length] = '\0';
+
+    ULTIMA_1bf2_SetTextPosition(2, PAD_KEYS_TYPED_ROW);
+    PrintPadded(text, SCREEN_RIGHT - 3);
+}
+
+// Adds the key in the grid to the keys typed: Delete takes back the last one,
+// or, with none, is passed on to the game as Backspace.
+static void AddPadKey(u16 key)
+{
+    if (key == PAD_KEY_DELETE && s_padKeyCount > 0)
+    {
+        s_padKeyCount--;
+        return;
+    }
+    if (s_padKeyCount < s_padKeyMax)
+        s_padKeyOut[s_padKeyCount++] = key == PAD_KEY_DELETE ? U5_KEY_BACKSPACE : key;
+}
+
+static void ShowPadKeys(void)
+{
+    static int s_selected; // remembered between openings
+    int count = ARRAYSIZE(s_padKeys);
+
+    s_menuOpen = true;
+    g_presentFullScreenPage = true;
+    D_538e = 1;
+
+    ULTIMA_1c22_SetTextWindowSize(0, 0, 0, SCREEN_RIGHT, SCREEN_BOTTOM);
+    ULTIMA_1b94_SelectTextWindow(0);
+    ULTIMA_0c22_GRAP_0f_SelectPage(0);
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    DrawFrame();
+    PrintCentered(1, "Keys");
+    for (int i = 0; i < count; i++)
+        DrawPadKey(i, i == s_selected);
+    DrawPadTyped();
+    PrintCentered(SCREEN_BOTTOM - 3, "A: pick   X: pick and type more");
+    PrintCentered(SCREEN_BOTTOM - 2, "B: cancel");
+
+    for (;;)
+    {
+        int previous = s_selected;
+        int key = ReadKey();
+
+        if (key == U5_KEY_ESC)
+        {
+            s_padKeyCount = 0;
+            break;
+        }
+
+        if (key == U5_KEY_ENTER)
+        {
+            AddPadKey(s_padKeys[s_selected].key);
+            break;
+        }
+
+        switch (key)
+        {
+        case U5_KEY_SPACE:
+            AddPadKey(s_padKeys[s_selected].key);
+            DrawPadTyped();
+            break;
+        case U5_KEY_LEFT:
+            s_selected = (s_selected + count - 1) % count;
+            break;
+        case U5_KEY_RIGHT:
+            s_selected = (s_selected + 1) % count;
+            break;
+        case U5_KEY_UP:
+            s_selected = (s_selected + count - PAD_KEYS_COLUMNS) % count;
+            break;
+        case U5_KEY_DOWN:
+            s_selected = (s_selected + PAD_KEYS_COLUMNS) % count;
+            break;
+        }
+
+        if (s_selected != previous)
+        {
+            DrawPadKey(previous, false);
+            DrawPadKey(s_selected, true);
+        }
+    }
+
+    ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
+    s_menuOpen = false;
+    g_presentFullScreenPage = false;
+}
+
+#endif
+
 bool OPTIONS_MENU_IsOpen(void)
 {
     return s_menuOpen;
@@ -1465,6 +1620,18 @@ void OPTIONS_MENU_ShowJournalInGame(void)
 void OPTIONS_MENU_ShowAutomapInGame(void)
 {
     RunOverGame(ShowAutomap);
+}
+#endif
+
+#if defined(ENABLE_GAMEPAD)
+// Opened with the gamepad's Y button while the game waits for a key.
+int OPTIONS_MENU_ChooseKeys(u16* keys, int max)
+{
+    s_padKeyOut = keys;
+    s_padKeyMax = max;
+    s_padKeyCount = 0;
+    RunOverGame(ShowPadKeys);
+    return s_padKeyCount;
 }
 #endif
 
