@@ -10,11 +10,13 @@
 #include <string.h>
 
 #include "funcs.h"
+#include "hover.h"
 
 // Scripted play for tools/playtest.py. A script is a list of tokens separated
 // by spaces or new lines; '#' starts a comment. Each token is one key press,
 // given to the game the next time it looks for a key (so none are lost while
-// it's busy), or "wait N" to let N milliseconds pass first:
+// it's busy), or "wait N" to let N milliseconds pass first, or "mouse X Y"
+// to put the mouse pointer at X, Y in the window (for the names under it):
 //
 //   a-z 0-9    that key
 //   ENTER ESC SPACE BACKSPACE TAB UP DOWN LEFT RIGHT PGUP PGDN F1-F10
@@ -25,10 +27,19 @@ extern void KEY_SDL_ProcessKeyDown(SDL_KeyboardEvent ev);
 
 #define MAX_TOKENS 4096
 
+enum
+{
+    STEP_KEY,
+    STEP_WAIT,
+    STEP_MOUSE,
+};
+
 typedef struct ScriptStep
 {
-    SDL_Keycode key; // 0 for a wait
+    int kind;
+    SDL_Keycode key;
     Uint64 waitMs;
+    float mouseX, mouseY;
 } ScriptStep;
 
 static ScriptStep s_steps[MAX_TOKENS];
@@ -79,6 +90,7 @@ static void LoadScript(const char* path)
     char line[512];
     FILE* stream = fopen(path, "r");
     bool waitNext = false;
+    int mouseArgs = 0; // coordinates still to read for "mouse"
 
     if (!stream)
         Fail(path, "can't open", path);
@@ -100,20 +112,45 @@ static void LoadScript(const char* path)
             if (waitNext)
             {
                 char* end;
-                step->key = 0;
+                step->kind = STEP_WAIT;
                 step->waitMs = strtoul(token, &end, 10);
                 if (*end != '\0')
                     Fail(path, "wait needs milliseconds, not", token);
                 waitNext = false;
+            }
+            else if (mouseArgs > 0)
+            {
+                char* end;
+                float value = strtof(token, &end);
+                if (*end != '\0')
+                    Fail(path, "mouse needs X and Y, not", token);
+                if (mouseArgs == 2)
+                {
+                    step->mouseX = value;
+                    mouseArgs--;
+                    continue;
+                }
+                step->kind = STEP_MOUSE;
+                step->mouseY = value;
+                mouseArgs = 0;
             }
             else if (SDL_strcasecmp(token, "wait") == 0)
             {
                 waitNext = true;
                 continue;
             }
+            else if (SDL_strcasecmp(token, "mouse") == 0)
+            {
+                mouseArgs = 2;
+                continue;
+            }
             else if ((step->key = TokenKey(token)) == 0)
             {
                 Fail(path, "unknown key", token);
+            }
+            else
+            {
+                step->kind = STEP_KEY;
             }
             s_stepCount++;
         }
@@ -145,9 +182,19 @@ void PLAYTEST_FeedKey(void)
     if (!s_active || SDL_GetTicks() < s_waitUntil)
         return;
 
-    while (s_next < s_stepCount && s_steps[s_next].key == 0)
+    while (s_next < s_stepCount && s_steps[s_next].kind != STEP_KEY)
     {
-        s_waitUntil = SDL_GetTicks() + s_steps[s_next++].waitMs;
+        ScriptStep* step = &s_steps[s_next++];
+
+        if (step->kind == STEP_MOUSE)
+        {
+#if defined(ENABLE_HOVER_NAMES)
+            HOVER_MouseMoved(step->mouseX, step->mouseY);
+#endif
+            continue;
+        }
+
+        s_waitUntil = SDL_GetTicks() + step->waitMs;
         if (s_waitUntil > SDL_GetTicks())
             return;
     }

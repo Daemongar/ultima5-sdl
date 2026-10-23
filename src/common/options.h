@@ -22,6 +22,7 @@ typedef struct Options
     bool colorTiles; // use TILES.BMP when present
     bool enhancedPalette;
     bool wideView; // 17-column map for 16:9 screens instead of the original 11
+    bool hoverNames; // name what's under the mouse on the map
 
     // Sound
     bool music;

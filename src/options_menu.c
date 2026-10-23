@@ -59,6 +59,9 @@ static OptionItem s_items[] =
     {PAGE_DISPLAY, ITEM_TOGGLE, "Full-color tiles", &g_options.colorTiles, NULL},
     {PAGE_DISPLAY, ITEM_TOGGLE, "Softer palette", &g_options.enhancedPalette, NULL},
     {PAGE_DISPLAY, ITEM_TOGGLE, "Wide view (16:9)", &g_options.wideView, NULL},
+#if defined(ENABLE_HOVER_NAMES)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Names under mouse", &g_options.hoverNames, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},

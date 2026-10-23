@@ -32,6 +32,9 @@
 int g_wideExtraTiles[WIDE_EXTRA_ROWS][2 * WIDE_EXTRA_COLUMNS];
 int g_wideExtraUnder[WIDE_EXTRA_ROWS][2 * WIDE_EXTRA_COLUMNS];
 bool g_wideExtraTilesReady; // false until the map has been drawn once
+// The same squares as LOOK2.DAT entries (map tile, or 0x100 + creature), or
+// -1, for the names under the mouse (hover.c).
+int g_wideExtraLook[WIDE_EXTRA_ROWS][2 * WIDE_EXTRA_COLUMNS];
 
 #define DAYLIGHT 0x32
 
@@ -185,11 +188,12 @@ static int GroundUnder(int dx, int dy)
     return -1;
 }
 
-static int ExtraTile(int dx, int dy, int* under)
+static int ExtraTile(int dx, int dy, int* under, int* look)
 {
     int light = D_58a5;
 
     *under = -1;
+    *look = -1;
     if (light < DAYLIGHT && dx * dx + dy * dy > light)
         return -1;
     if (!InLineOfSight(dx, dy))
@@ -213,12 +217,14 @@ static int ExtraTile(int dx, int dy, int* under)
             *under = D_b11e[tile];
             if (GRAP_BUF_TileHasClearPixels(*under))
                 *under = GroundUnder(dx, dy);
+            *look = 0x100 + actor->_1_animTile;
             return 0x100 + actor->_1_animTile;
         }
     }
 
     if (GRAP_BUF_TileHasClearPixels(D_b11e[tile]))
         *under = GroundUnder(dx, dy);
+    *look = tile;
     return D_b11e[tile];
 }
 
@@ -236,7 +242,8 @@ void WIDE_UpdateExtraTiles(void)
             int dx = col < WIDE_EXTRA_COLUMNS ? col - (WIDE_EXTRA_COLUMNS + 5)
                                               : col - WIDE_EXTRA_COLUMNS + 6;
             g_wideExtraUnder[row][col] = -1;
-            g_wideExtraTiles[row][col] = active ? ExtraTile(dx, dy, &g_wideExtraUnder[row][col]) : -1;
+            g_wideExtraLook[row][col] = -1;
+            g_wideExtraTiles[row][col] = active ? ExtraTile(dx, dy, &g_wideExtraUnder[row][col], &g_wideExtraLook[row][col]) : -1;
         }
     }
     g_wideExtraTilesReady = true;

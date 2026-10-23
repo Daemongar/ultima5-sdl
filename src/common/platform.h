@@ -173,6 +173,10 @@
 // tests in tools/playtest.py (see playtest.c).
 //#define ENABLE_PLAYTEST 1
 
+// Name the creature or terrain under the mouse pointer on the map, as Look
+// would (see hover.c).
+//#define ENABLE_HOVER_NAMES 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -209,6 +213,7 @@
 #define ENABLE_AUTOMAP 1
 #define ENABLE_MIX_RECIPES 1
 #define ENABLE_PLAYTEST 1
+#define ENABLE_HOVER_NAMES 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

@@ -3,6 +3,7 @@
 #include "graphics/grap.h"
 
 #include "event.h"
+#include "hover.h"
 
 #include <SDL3/SDL.h>
 
@@ -37,15 +38,29 @@ void EVT_PollMessages(void)
 			break;
 
 		case SDL_EVENT_KEY_DOWN:
+#if defined(ENABLE_HOVER_NAMES)
+			HOVER_KeyPressed();
+#endif
 			KEY_SDL_ProcessKeyDown(ev.key);
 			break;
 
-#if defined(ENABLE_MOUSE_AIM)
 		case SDL_EVENT_MOUSE_MOTION:
+#if defined(ENABLE_HOVER_NAMES)
+			HOVER_MouseMoved(ev.motion.x, ev.motion.y);
+#endif
+#if defined(ENABLE_MOUSE_AIM)
 			if (g_options.mouseAim)
 				KEY_SDL_ProcessMouseMotion(ev.motion);
+#endif
 			break;
 
+#if defined(ENABLE_HOVER_NAMES)
+		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+			HOVER_MouseLeft();
+			break;
+#endif
+
+#if defined(ENABLE_MOUSE_AIM)
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 			if (g_options.mouseAim)
 				KEY_SDL_ProcessMouseButtonDown(ev.button);

@@ -212,7 +212,7 @@ Gameplay
 
 Armor now reduces combat damage. In DOS it had no effect.
 The Ztats screen shows each character's armor score (the defense combat uses) above Magic.
-Mouse aiming in combat.
+Mouse aiming in combat (the square under the pointer is now picked exactly; it used to pick the one to the left or above when the pointer was in a square's left or top half).
 Easier conversations: keywords aren't case-sensitive, long replies page automatically, and keyword hints are shown.
 Smarter monster targeting.
 The whole party earns experience for kills, with a bonus for fighting groups.
@@ -221,6 +221,7 @@ Esc opens the quit prompt.
 Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
 A dungeon map (F10) that fills in as you explore.
+Names under the mouse: pointing at the map shows what's there ("a minstrel", "grass"), as Look would, on the overworld, in towns and in combat. It hides when you press a key until the mouse moves again, and can be turned off on the Display page (`hover_names`).
 Recipe helper: when mixing, the spell's reagents from the spell book are already ticked if you have them all, and "How much?" says how many you can make. In Xen Mani and Rel Xen Bet, learned in the game, stay manual.
 Level-up stat gains are weighted by class.
 Bard mana rounds up.

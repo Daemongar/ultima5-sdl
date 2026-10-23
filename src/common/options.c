@@ -20,6 +20,9 @@ static OptionFlag s_flags[] =
     {"display", "color_tiles", &g_options.colorTiles, true},
     {"display", "enhanced_palette", &g_options.enhancedPalette, true},
     {"display", "wide_view", &g_options.wideView, false},
+#if defined(ENABLE_HOVER_NAMES)
+    {"display", "hover_names", &g_options.hoverNames, true},
+#endif
     {"sound", "music", &g_options.music, true},
     {"sound", "sound_effects", &g_options.soundEffects, true},
     {"sound", "enhanced_sound_effects", &g_options.enhancedSounds, true},

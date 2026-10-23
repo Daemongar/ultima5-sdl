@@ -152,14 +152,15 @@ extern int g_presentLayout;
 #define COMBAT_MAP_TILE_PX tilePixelSize
 #define COMBAT_MAP_TILES 11
 
+extern bool GRAP_SDL_WindowToRender(float windowX, float windowY, int* renderX, int* renderY);
+
 static bool MousePosToTile(float mx, float my, int* outTileX, int* outTileY)
 {
-    if (g_presentRect.w <= 0 || g_presentRect.h <= 0)
-        return false;
+    int renderX, renderY;
 
-    int renderX = (int)((mx - g_presentRect.x) * g_presentWidth / g_presentRect.w);
-    int renderY = (int)((my - g_presentRect.y) * renderHeight / g_presentRect.h);
-    if (renderX < 0 || renderY < 0)
+    // Mouse events are in window coordinates, which differ from the picture's
+    // pixels on a scaled display.
+    if (!GRAP_SDL_WindowToRender(mx, my, &renderX, &renderY))
         return false;
 
     // Back to the game's own 640x400 coordinates.
@@ -167,7 +168,13 @@ static bool MousePosToTile(float mx, float my, int* outTileX, int* outTileY)
         renderX = WideToGameX(renderX);
     else if (g_presentLayout == PRESENT_LAYOUT_CENTERED)
         renderX -= WIDE_EXTRA_WIDTH;
-    if (renderX < 0)
+
+    // The battlefield starts inside the frame, where the crosshair is drawn
+    // (ULTIMA_56ac_DrawMap); without this the left and top half of each
+    // square picked the one before it.
+    renderX -= MAP_RENDER_LEFT;
+    renderY -= MAP_RENDER_TOP;
+    if (renderX < 0 || renderY < 0)
         return false;
 
     int tileX = renderX / COMBAT_MAP_TILE_PX;

@@ -6,6 +6,7 @@
 #include "app_icon.h"
 #include "grap_buf.h"
 #include "grap_ops.h"
+#include "hover.h"
 #include "origin.h"
 #include "wd.h"
 
@@ -441,6 +442,25 @@ static void ComposeFrame(void)
 
 extern void DisplayDebugMessages(void);
 
+// A point in window coordinates (as mouse events give them) to the game's
+// 640x400 render coordinates, with the wide view's extra width; false if it's
+// outside the picture.
+bool GRAP_SDL_WindowToRender(float windowX, float windowY, int* renderX, int* renderY)
+{
+    float x, y;
+
+    if (g_presentRect.w <= 0 || g_presentRect.h <= 0 ||
+        !SDL_RenderCoordinatesFromWindow(s_sdlRenderer, windowX, windowY, &x, &y))
+    {
+        return false;
+    }
+
+    *renderX = (int)((x - g_presentRect.x) * g_presentWidth / g_presentRect.w);
+    *renderY = (int)((y - g_presentRect.y) * hiresHeight / g_presentRect.h);
+    return x >= g_presentRect.x && y >= g_presentRect.y &&
+           *renderX < g_presentWidth && *renderY < hiresHeight;
+}
+
 void GRAP_SDL_FlushFrame(void)
 {
     LinearToRGB();
@@ -475,6 +495,9 @@ void GRAP_SDL_FlushFrame(void)
     SDL_SetRenderDrawColor(s_sdlRenderer, 0, 0, 0, 255);
     SDL_RenderClear(s_sdlRenderer);
     SDL_RenderTexture(s_sdlRenderer, s_sdlTexture, &srcRect, &dstRect);
+#if defined(ENABLE_HOVER_NAMES)
+    HOVER_Draw(s_sdlRenderer);
+#endif
     SDL_RenderPresent(s_sdlRenderer);
 }
 
