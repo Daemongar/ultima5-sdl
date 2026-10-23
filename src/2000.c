@@ -6,6 +6,7 @@
 
 #include "audio/aud_sfx.h"
 #include "time/time.h"
+#include "playtest.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -24,6 +25,12 @@ u16 ULTIMA_2032_ToUpper(u8 x)
 // STUB (asm)
 uint ULTIMA_2056_GetTime(void)
 {
+#if defined(ENABLE_PLAYTEST)
+    // Only used to seed the random numbers: a fixed seed lets a test play
+    // out the same way every time.
+    if (PLAYTEST_Active())
+        return 0x1234;
+#endif
     return time(NULL) & 0xffff;
 }
 

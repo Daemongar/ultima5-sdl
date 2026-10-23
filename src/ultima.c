@@ -15,6 +15,7 @@
 #include "intro.h"
 #include "mainout.h"
 #include "outsubs.h"
+#include "playtest.h"
 #include "save_slots.h"
 #include "town.h"
 
@@ -39,6 +40,10 @@ int CDECL main(int argc, char** argv/*, char** envp*/)
 
 #if defined(ENABLE_TRANSLATION)
     TRS_Initialize();
+#endif
+
+#if defined(ENABLE_PLAYTEST)
+    PLAYTEST_Init(argc, argv);
 #endif
 
 #if defined(TARGET_SDL)

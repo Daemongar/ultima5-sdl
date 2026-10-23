@@ -2,6 +2,7 @@
 
 #include "graphics/grap_buf.h"
 #include "options_menu.h"
+#include "playtest.h"
 #include "vars.h"
 #include "macros.h"
 
@@ -220,6 +221,14 @@ int KEY_PollKey(void)
 	D_538a = 0;
 
 	EVT_Yield();
+
+#if defined(ENABLE_PLAYTEST)
+    // A script's next key, when the game has none waiting.
+    if (s_screenRequested == 0 && s_lastDownKeycode == 0)
+    {
+        PLAYTEST_FeedKey();
+    }
+#endif
 
     if (s_screenRequested != 0)
     {

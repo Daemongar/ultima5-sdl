@@ -169,6 +169,10 @@
 // learned in the game, stay manual.
 //#define ENABLE_MIX_RECIPES 1
 
+// --script FILE plays keys from a file, with a fixed random seed, for the
+// tests in tools/playtest.py (see playtest.c).
+//#define ENABLE_PLAYTEST 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -204,6 +208,7 @@
 #define ENABLE_JOURNAL 1
 #define ENABLE_AUTOMAP 1
 #define ENABLE_MIX_RECIPES 1
+#define ENABLE_PLAYTEST 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

@@ -2,6 +2,7 @@
 #include "common/file.h"
 
 #include "data_path.h"
+#include "playtest.h"
 
 #if defined(TARGET_SDL)
 
@@ -124,6 +125,12 @@ static void RememberCurrentFolder(void)
     char file[PATH_MAX_LEN];
     char cwd[PATH_MAX_LEN];
     FILE* fp;
+
+#if defined(ENABLE_PLAYTEST)
+    // A test plays in a copy of the game; keep the player's own folder.
+    if (PLAYTEST_Active())
+        return;
+#endif
 
     RememberedPathFile(file, sizeof(file));
     if (file[0] == '\0' || getcwd(cwd, sizeof(cwd)) == NULL || (fp = fopen(file, "w")) == NULL)

@@ -70,6 +70,17 @@ Then build with `make -f Makefile.linux` (or `CONFIG=debug`). The executable is 
 
 Every push is built for Linux (SDL3 3.4.8 and SDL3_mixer 3.2.0, built from source as above) and Windows by GitHub Actions; see `.github/workflows/ci.yml`.
 
+### Tests
+
+`tools/playtest.py` plays scripted games and checks the results: saving with Q, quicksave and quickload, save slots, the recipe helper and the dungeon map. Each test copies your Ultima V folder to a temporary one, starts a new game there from `INIT.GAM`, plays a list of key presses (`--script`, see `src/playtest.c`) with a fixed random seed, and checks the files the game writes. Your own saves and settings aren't touched.
+
+```sh
+python3 tools/playtest.py            # all tests; --list to see them, a name to run one
+python3 tools/playtest.py --data /path/to/UltimaV --exe build/linux/release/u5linux
+```
+
+The game data can't be included in the repository, so the tests run on your own machine rather than in CI. On Linux, set `LD_LIBRARY_PATH=$HOME/.local/lib` if SDL3 was installed there.
+
 ### Settings
 
 Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound and Gameplay pages, and Esc saves and returns. Display and sound changes apply immediately.
