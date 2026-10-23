@@ -687,6 +687,247 @@ bool SFXSYN_Water(SfxBuffer* out, bool waterfall)
 }
 
 // ---------------------------------------------------------------------------
+// Ambience: seamless loops for the background of a place (SFXSYN_Ambience).
+// Everything that sounds is written around the end of the buffer, and noise
+// beds are rendered past it and cross-faded into the start, so the loops
+// have no seam.
+
+#define AMBIENCE_LOOP_SEC 12.0
+#define AMBIENCE_SEAM_SEC 0.5
+
+// Noise through a lowpass, cross-faded at the seam.
+static void AddNoiseBed(float* buf, int count, double cutoff, float level, bool band)
+{
+    int seam = (int)(AMBIENCE_SEAM_SEC * SFXSYN_RATE);
+    float* tmp = (float*)calloc(count + seam, sizeof(float));
+    Lowpass lp;
+
+    if (!tmp)
+        return;
+    LowpassInit(&lp, cutoff, band ? 1.5 : 0.7);
+    for (int i = 0; i < count + seam; i++)
+    {
+        float low = LowpassRun(&lp, White());
+        tmp[i] = band ? lp.band : low;
+    }
+    for (int i = 0; i < seam; i++)
+    {
+        float fade = (float)i / seam;
+        tmp[i] = tmp[i] * fade + tmp[count + i] * (1.0f - fade);
+    }
+    for (int i = 0; i < count; i++)
+        buf[i] += tmp[i] * level;
+    free(tmp);
+}
+
+// A sine whose pitch glides from startHz to endHz, with a soft attack and
+// release, written at start (wrapping around the loop).
+static void AddGlide(float* buf, int count, int start, double seconds, double startHz, double endHz, double amp)
+{
+    int len = (int)(seconds * SFXSYN_RATE);
+    int edge = len / 5 + 1;
+    double phase = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        double t = (double)i / len;
+        phase += (startHz + (endHz - startHz) * t) / SFXSYN_RATE;
+        double env = i < edge ? (double)i / edge : (i > len - edge ? (double)(len - i) / edge : 1.0);
+        buf[(start + i) % count] += (float)(sin(2.0 * M_PI * phase) * env * amp);
+    }
+}
+
+// Surf: low rolling noise and a brighter hiss that swell together as each
+// wave breaks and fade as it draws back; two waves to a loop, each its own.
+static void AmbienceSurf(float* buf, int count)
+{
+    float* roar = (float*)calloc(count, sizeof(float));
+    float* hiss = (float*)calloc(count, sizeof(float));
+    double breaks[2];
+
+    if (!roar || !hiss)
+    {
+        free(roar);
+        free(hiss);
+        return;
+    }
+    AddNoiseBed(roar, count, 450.0, 1.0f, false);
+    AddNoiseBed(hiss, count, 2500.0, 1.0f, true);
+
+    breaks[0] = Random01() * 0.1;
+    breaks[1] = 0.5 + Random01() * 0.1;
+    for (int i = 0; i < count; i++)
+    {
+        double env = 0.22;
+        for (int w = 0; w < 2; w++)
+        {
+            // Seconds since this wave broke, around the loop.
+            double since = fmod((double)i / count - breaks[w] + 1.0, 1.0) * AMBIENCE_LOOP_SEC;
+            double rise = since < 0.8 ? since / 0.8 : 1.0;
+            env += rise * exp(-(since > 0.8 ? since - 0.8 : 0) / 1.6) * 0.8;
+        }
+        buf[i] += (float)((roar[i] * 1.6 + hiss[i] * 0.5) * env);
+    }
+    free(roar);
+    free(hiss);
+}
+
+// Birdsong: a faint breeze and now and then a bird, a few quick notes that
+// glide up or down.
+static void AmbienceBirds(float* buf, int count)
+{
+    AddNoiseBed(buf, count, 300.0, 0.15f, false);
+
+    int songs = (int)(0.6 * AMBIENCE_LOOP_SEC);
+    for (int s = 0; s < songs; s++)
+    {
+        int start = (int)(Random01() * count);
+        int notes = 2 + (int)(Random01() * 4);
+        double pitch = 2600.0 + Random01() * 2200.0;
+        double amp = 0.05 + Random01() * 0.06;
+        bool falling = Random01() < 0.5;
+
+        for (int n = 0; n < notes; n++)
+        {
+            double len = 0.04 + Random01() * 0.06;
+            double sweep = pitch * (0.15 + Random01() * 0.25);
+            AddGlide(buf, count, start, len, falling ? pitch + sweep : pitch - sweep, pitch, amp);
+            start += (int)((len + 0.03 + Random01() * 0.05) * SFXSYN_RATE);
+            pitch *= 0.92 + Random01() * 0.16;
+        }
+    }
+}
+
+// Crickets: a few insects, each repeating its chirp (a short burst of pulses
+// at one pitch) at its own steady rate, a whole number of times per loop.
+static void AmbienceCrickets(float* buf, int count)
+{
+    AddNoiseBed(buf, count, 250.0, 0.04f, false);
+
+    for (int c = 0; c < 3; c++)
+    {
+        int chirps = 14 + (int)(Random01() * 10);
+        double pitch = 3800.0 + Random01() * 1400.0;
+        double amp = 0.03 + Random01() * 0.025;
+        int offset = (int)(Random01() * count);
+        int pulses = 3 + (int)(Random01() * 2);
+
+        for (int k = 0; k < chirps; k++)
+        {
+            int start = offset + (int)((double)k * count / chirps);
+            for (int p = 0; p < pulses; p++)
+                AddGlide(buf, count, start + (int)(p * 0.033 * SFXSYN_RATE), 0.018, pitch, pitch * 0.98, amp);
+        }
+    }
+}
+
+// Dripping water in a cave: a low rumble and now and then a drop, a quick
+// falling plink with a few fainter echoes.
+static void AmbienceDrips(float* buf, int count)
+{
+    static const double s_echoSec[3] = {0.11, 0.24, 0.41};
+    static const double s_echoLevel[3] = {0.35, 0.2, 0.1};
+
+    AddNoiseBed(buf, count, 120.0, 0.25f, false);
+
+    int drips = (int)(0.7 * AMBIENCE_LOOP_SEC);
+    for (int d = 0; d < drips; d++)
+    {
+        int start = (int)(Random01() * count);
+        double pitch = 900.0 + Random01() * 900.0;
+        double amp = 0.08 + Random01() * 0.08;
+
+        AddGlide(buf, count, start, 0.07, pitch * 1.6, pitch, amp);
+        for (int e = 0; e < 3; e++)
+            AddGlide(buf, count, start + (int)(s_echoSec[e] * SFXSYN_RATE), 0.07, pitch * 1.6, pitch, amp * s_echoLevel[e]);
+    }
+}
+
+// A hearth: the low roar of the flames, flickering, and the snap of burning
+// wood: short clicks, now and then a louder pop.
+static void AmbienceHearth(float* buf, int count)
+{
+    float* roar = (float*)calloc(count, sizeof(float));
+    Lowpass click;
+
+    if (!roar)
+        return;
+    AddNoiseBed(roar, count, 350.0, 1.0f, false);
+
+    // Flicker: a slow wobble, periodic over the loop.
+    for (int i = 0; i < count; i++)
+    {
+        double t = (double)i / count;
+        double flicker = 0.75 + 0.15 * sin(2.0 * M_PI * 7 * t) + 0.1 * sin(2.0 * M_PI * 17 * t + 1.3);
+        buf[i] += (float)(roar[i] * flicker * 0.9);
+    }
+    free(roar);
+
+    LowpassInit(&click, 3000.0, 1.2);
+    int snaps = (int)(14 * AMBIENCE_LOOP_SEC);
+    for (int s = 0; s < snaps; s++)
+    {
+        int start = (int)(Random01() * count);
+        bool pop = Random01() < 0.08;
+        int len = (int)((pop ? 0.012 : 0.003 + Random01() * 0.004) * SFXSYN_RATE);
+        double amp = pop ? 0.35 : 0.04 + Random01() * 0.1;
+
+        for (int i = 0; i < len; i++)
+        {
+            LowpassRun(&click, White());
+            double env = exp(-6.0 * i / len);
+            buf[(start + i) % count] += (float)(click.band * env * amp);
+        }
+    }
+}
+
+bool SFXSYN_Ambience(SfxBuffer* out, int kind)
+{
+    // Target loudness (RMS) of each loop before the track's gain.
+    static const float s_levels[] = {0, 0.07f, 0.035f, 0.035f, 0.05f, 0.06f};
+    int count = (int)(AMBIENCE_LOOP_SEC * SFXSYN_RATE);
+
+    out->samples = NULL;
+    if (kind <= SFXSYN_AMBIENCE_NONE || kind > SFXSYN_AMBIENCE_HEARTH)
+        return false;
+
+    out->samples = (float*)calloc(count, sizeof(float));
+    if (!out->samples)
+        return false;
+    out->count = count;
+    out->busy = count;
+
+    switch (kind)
+    {
+    case SFXSYN_AMBIENCE_SURF: AmbienceSurf(out->samples, count); break;
+    case SFXSYN_AMBIENCE_BIRDS: AmbienceBirds(out->samples, count); break;
+    case SFXSYN_AMBIENCE_CRICKETS: AmbienceCrickets(out->samples, count); break;
+    case SFXSYN_AMBIENCE_DRIPS: AmbienceDrips(out->samples, count); break;
+    case SFXSYN_AMBIENCE_HEARTH: AmbienceHearth(out->samples, count); break;
+    }
+
+    double sum = 0;
+    for (int i = 0; i < count; i++)
+        sum += out->samples[i] * out->samples[i];
+    double rms = sqrt(sum / count);
+    float scale = rms > 0 ? (float)(s_levels[kind] / rms) : 0;
+
+    float peak = 0;
+    for (int i = 0; i < count; i++)
+    {
+        out->samples[i] *= scale;
+        if (fabsf(out->samples[i]) > peak)
+            peak = fabsf(out->samples[i]);
+    }
+    if (peak > 0.9f)
+    {
+        for (int i = 0; i < count; i++)
+            out->samples[i] *= 0.9f / peak;
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
 
 bool SFXSYN_Pulse(SfxBuffer* out, bool enhanced, int freq, int delay, int dur, int pulseWidth, int pulseInc)
 {

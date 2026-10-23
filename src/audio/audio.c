@@ -99,6 +99,14 @@ void AUDIO_PlaySynthSweepTone(int param_1, int param_2, int param_3, int param_4
     s_sfxOps->PlaySynthSweepTone(param_1, param_2, param_3, param_4);
 }
 
+void AUDIO_SetAmbience(int kind, int level)
+{
+    if (!s_sfxOps || !s_sfxOps->SetAmbience)
+        return;
+
+    s_sfxOps->SetAmbience(kind, level);
+}
+
 bool AUDIO_SetAmbientWater(int kind, int closeness)
 {
     if (!s_sfxOps || !s_sfxOps->SetAmbientWater)

@@ -22,6 +22,7 @@ typedef struct AudioSfxDriverOps
     void (*PlaySynthTone)(int, int);
     void (*PlaySynthSweepTone)(int, int, int, int);
     bool (*SetAmbientWater)(int, int); // optional
+    void (*SetAmbience)(int, int); // optional
 } AudioSfxDriverOps;
 
 #endif

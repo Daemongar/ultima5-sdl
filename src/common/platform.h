@@ -191,6 +191,10 @@
 // class_perks.h). In the original the classes differed only in their stats.
 //#define ENABLE_CLASS_PERKS 1
 
+// Background sounds for a place: surf by the sea, birds by day and crickets
+// at night, a hearth's crackle, dripping water underground (see ambience.c).
+//#define ENABLE_AMBIENCE 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -231,6 +235,7 @@
 #define ENABLE_STAT_DAMAGE 1
 #define ENABLE_KARMA_HINT 1
 #define ENABLE_CLASS_PERKS 1
+#define ENABLE_AMBIENCE 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

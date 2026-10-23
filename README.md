@@ -208,6 +208,7 @@ Sound
 Background music from the Commodore 64 version's soundtrack, as .ogg files.
 PC-speaker sound effects are recreated in software, either as the original speaker played them (Classic) or with smooth tones, filtered noise and light reverb (Enhanced, the default). Effects can overlap instead of cutting each other off.
 With Enhanced effects, fountains and waterfalls play continuous running water that grows louder as you approach, in place of the original's crackle.
+Ambient sounds: surf at the sea's edge (louder the more open water is near), birdsong by day and crickets at night outdoors and in towns, the crackle of a hearth near a fireplace, and dripping water in dungeons and the underworld. They are synthesized like the other effects, cross-fade from place to place, follow the effects volume, and can be turned off on the Sound page (`ambient_sounds`).
 Gameplay
 
 Armor now reduces combat damage. In DOS it had no effect.

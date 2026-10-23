@@ -73,6 +73,9 @@ static OptionItem s_items[] =
     {PAGE_SOUND, ITEM_VOLUME, "Effects volume", NULL, &g_options.soundVolume},
     {PAGE_SOUND, ITEM_TOGGLE, "Enhanced effects", &g_options.enhancedSounds, NULL},
     {PAGE_SOUND, ITEM_TOGGLE, "Terrain footsteps", &g_options.terrainFootsteps, NULL},
+#if defined(ENABLE_AMBIENCE)
+    {PAGE_SOUND, ITEM_TOGGLE, "Ambient sounds", &g_options.ambientSounds, NULL},
+#endif
 
     {PAGE_COMBAT, ITEM_TOGGLE, "Mouse aiming", &g_options.mouseAim, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Dialog improvements", &g_options.dialogImprovements, NULL},

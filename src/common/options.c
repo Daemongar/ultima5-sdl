@@ -27,6 +27,9 @@ static OptionFlag s_flags[] =
     {"sound", "sound_effects", &g_options.soundEffects, true},
     {"sound", "enhanced_sound_effects", &g_options.enhancedSounds, true},
     {"sound", "terrain_footsteps", &g_options.terrainFootsteps, true},
+#if defined(ENABLE_AMBIENCE)
+    {"sound", "ambient_sounds", &g_options.ambientSounds, true},
+#endif
     {"gameplay", "mouse_aim", &g_options.mouseAim, true},
     {"gameplay", "dialog_improvements", &g_options.dialogImprovements, true},
     {"gameplay", "smarter_ai", &g_options.smarterAi, true},

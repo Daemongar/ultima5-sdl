@@ -39,6 +39,8 @@ MAP_ID = 0x2ed            # D_5893_map_id
 MAP_LEVEL = 0x2ef
 MAP_X = 0x2f0
 MAP_Y = 0x2f1
+CHUNK_X = 0x2f5           # D_589b
+CHUNK_Y = 0x2f6           # D_589c
 TORCH_LIGHT = 0x300       # D_58a6
 DUNGEON_MAP = 0x3b4       # D_595a, 8 levels of 8x8 cells
 OBJECTS = 0x6b4           # D_5c5a, 32 objects of 8 bytes
@@ -234,6 +236,37 @@ def check_mage_cost(game):
     check(spent == 1, f"expected Mariah to spend 1 MP on a 2nd-circle spell, she spent {spent}")
 
 
+AMBIENCE_SURF, AMBIENCE_DRIPS = 1, 4  # AMBIENCE_* in src/audio/audio.h
+
+
+def setup_coast(game):
+    # On the grass at the sea's edge east of Britain.
+    x, y = 94, 106
+    game.gam[MAP_ID] = 0
+    game.gam[MAP_LEVEL] = 0
+    game.gam[MAP_X] = x
+    game.gam[MAP_Y] = y
+    # The 32x32 block of map the game keeps around the party (D_589b/c).
+    game.gam[CHUNK_X] = ((x >> 4) - 1) * 16 & 0xff
+    game.gam[CHUNK_Y] = ((y >> 4) - 1) * 16 & 0xff
+
+
+def ambience_played(game):
+    log = game.folder / "LOG.TXT"
+    text = log.read_text(errors="replace") if log.is_file() else ""
+    return [int(line.split("ambience:")[1]) for line in text.splitlines() if "ambience:" in line]
+
+
+def check_surf(game):
+    played = ambience_played(game)
+    check(AMBIENCE_SURF in played, f"expected surf by the sea, the ambience was {played}")
+
+
+def check_drips(game):
+    played = ambience_played(game)
+    check(played[:1] == [AMBIENCE_DRIPS], f"expected dripping water in the dungeon, the ambience was {played}")
+
+
 TESTS = [
     ("save_and_quit", "a new game starts and Q saves it",
      setup_none, START + " q y", check_saved),
@@ -247,6 +280,10 @@ TESTS = [
      setup_dungeon, START + " f10 wait 500 esc", check_dungeon_map),
     ("class_perks", "a mage pays 1 MP less for a 2nd-circle spell",
      setup_mage, START + " c down down down enter i x m enter wait 1500 q y", check_mage_cost),
+    ("ambience_coast", "the sea's edge plays surf",
+     setup_coast, START + " wait 2000", check_surf),
+    ("ambience_dungeon", "a dungeon plays dripping water",
+     setup_dungeon, START + " wait 2000", check_drips),
 ]
 
 

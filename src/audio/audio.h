@@ -29,6 +29,14 @@
 #define AMBIENT_WATERFALL 2
 #define AMBIENT_FOUNTAIN 3
 
+// The background of a place (see AUDIO_SetAmbience).
+#define AMBIENCE_NONE 0
+#define AMBIENCE_SURF 1
+#define AMBIENCE_BIRDS 2
+#define AMBIENCE_CRICKETS 3
+#define AMBIENCE_DRIPS 4
+#define AMBIENCE_HEARTH 5
+
 extern void AUDIO_Initialize(void);
 extern void AUDIO_Cleanup(void);
 
@@ -48,5 +56,9 @@ extern void AUDIO_PlaySynthSweepTone(int param_1, int param_2, int param_3, int 
 // 0-100. Returns true when the driver plays it as a continuous loop, in which
 // case the original's short noise bursts should not be played.
 extern bool AUDIO_SetAmbientWater(int kind, int closeness);
+
+// The background sound of the place the party is in (AMBIENCE_*), called with
+// every map update; level is 0-100. Fades out when the calls stop.
+extern void AUDIO_SetAmbience(int kind, int level);
 
 #endif

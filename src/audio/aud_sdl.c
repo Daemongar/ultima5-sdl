@@ -68,9 +68,60 @@ static int s_ambientKind;
 static float s_ambientLevel;
 static Uint64 s_ambientLastCall;
 
+// The background of a place (surf, birds, crickets, drips, a hearth): a loop
+// on one of two tracks, so moving from one kind of place to another
+// cross-fades. Like the water, it plays while the game keeps asking for it.
+#define AMBIENCE_KINDS (AMBIENCE_HEARTH + 1)
+#define AMBIENCE_TIMEOUT_MS 2000
+#define AMBIENCE_FADE_MS 1500
+
+static MIX_Track* s_ambienceTracks[2];
+static int s_ambienceCurrent;
+static MIX_Audio* s_ambienceAudio[AMBIENCE_KINDS]; // made on first use
+static SDL_PropertiesID s_ambiencePlayProp;
+static int s_ambienceKind;
+static float s_ambienceLevel;
+static Uint64 s_ambienceLastCall;
+
 static float AUDIO_SDL_SfxGain(void)
 {
     return g_options.soundEffects ? 0.2f * g_options.soundVolume / 8.0f : 0.0f;
+}
+
+static void AUDIO_SDL_ApplyAmbienceGain(void)
+{
+    MIX_Track* track = s_ambienceTracks[s_ambienceCurrent];
+    if (track != NULL)
+        MIX_SetTrackGain(track, AUDIO_SDL_SfxGain() * s_ambienceLevel);
+}
+
+static void AUDIO_SDL_StopAmbience(void)
+{
+    if (s_ambienceKind != AMBIENCE_NONE)
+        MIX_StopTrack(s_ambienceTracks[s_ambienceCurrent], MIX_MSToFrames(SFXSYN_RATE, AMBIENCE_FADE_MS));
+    s_ambienceKind = AMBIENCE_NONE;
+}
+
+static MIX_Audio* AUDIO_SDL_AmbienceAudio(int kind)
+{
+    if (s_ambienceAudio[kind] == NULL)
+    {
+        SfxBuffer loop;
+        if (SFXSYN_Ambience(&loop, kind))
+        {
+            Sint16* pcm = (Sint16*)malloc((size_t)loop.count * sizeof(Sint16));
+            if (pcm)
+            {
+                for (int i = 0; i < loop.count; i++)
+                    pcm[i] = (Sint16)(loop.samples[i] * 32767.0f);
+                SDL_AudioSpec spec = { SDL_AUDIO_S16, 1, SFXSYN_RATE };
+                s_ambienceAudio[kind] = MIX_LoadRawAudio(s_mixer, pcm, (size_t)loop.count * sizeof(Sint16), &spec);
+                free(pcm);
+            }
+        }
+        SFXSYN_Free(&loop);
+    }
+    return s_ambienceAudio[kind];
 }
 
 static void AUDIO_SDL_ApplyAmbientGain(void)
@@ -91,6 +142,8 @@ static Uint32 SDLCALL AUDIO_SDL_AmbientTimer(void* userdata, SDL_TimerID timerID
     SDL_LockMutex(s_ambientLock);
     if (s_ambientKind != AMBIENT_NONE && SDL_GetTicks() - s_ambientLastCall > AMBIENT_TIMEOUT_MS)
         AUDIO_SDL_StopAmbient();
+    if (s_ambienceKind != AMBIENCE_NONE && SDL_GetTicks() - s_ambienceLastCall > AMBIENCE_TIMEOUT_MS)
+        AUDIO_SDL_StopAmbience();
     SDL_UnlockMutex(s_ambientLock);
     return interval;
 }
@@ -142,6 +195,35 @@ static bool AUDIO_SDL_SetAmbientWater(int kind, int closeness)
     bool playing = s_ambientKind != AMBIENT_NONE;
     SDL_UnlockMutex(s_ambientLock);
     return playing;
+}
+
+static void AUDIO_SDL_SetAmbience(int kind, int level)
+{
+    if (kind < AMBIENCE_NONE || kind >= AMBIENCE_KINDS || s_ambienceTracks[0] == NULL)
+        kind = AMBIENCE_NONE;
+
+    SDL_LockMutex(s_ambientLock);
+    s_ambienceLastCall = SDL_GetTicks();
+
+    if (kind != s_ambienceKind)
+    {
+        // The old loop fades out on its track while the new one fades in on
+        // the other.
+        debug("ambience: %d", kind); // checked by tools/playtest.py
+        AUDIO_SDL_StopAmbience();
+        MIX_Audio* audio = kind != AMBIENCE_NONE ? AUDIO_SDL_AmbienceAudio(kind) : NULL;
+        if (audio != NULL)
+        {
+            s_ambienceCurrent ^= 1;
+            MIX_SetTrackAudio(s_ambienceTracks[s_ambienceCurrent], audio);
+            MIX_PlayTrack(s_ambienceTracks[s_ambienceCurrent], s_ambiencePlayProp);
+            s_ambienceKind = kind;
+        }
+    }
+
+    s_ambienceLevel = level / 100.0f;
+    AUDIO_SDL_ApplyAmbienceGain();
+    SDL_UnlockMutex(s_ambientLock);
 }
 
 static int AUDIO_SDL_PickVoice(void)
@@ -218,6 +300,7 @@ void AUDIO_SDL_ApplySoundOptions(void)
             MIX_SetTrackGain(s_sfxVoices[v], sfxGain);
     }
     AUDIO_SDL_ApplyAmbientGain();
+    AUDIO_SDL_ApplyAmbienceGain();
 }
 
 void AUDIO_SDL_Init(void)
@@ -237,6 +320,12 @@ void AUDIO_SDL_Init(void)
     SDL_SetNumberProperty(s_ambientPlayProp, MIX_PROP_PLAY_FADE_IN_MILLISECONDS_NUMBER, AMBIENT_FADE_IN_MS);
     s_ambientLock = SDL_CreateMutex();
     s_ambientTimer = SDL_AddTimer(250, AUDIO_SDL_AmbientTimer, NULL);
+
+    for (int i = 0; i < 2; i++)
+        s_ambienceTracks[i] = MIX_CreateTrack(s_mixer);
+    s_ambiencePlayProp = SDL_CreateProperties();
+    SDL_SetNumberProperty(s_ambiencePlayProp, MIX_PROP_PLAY_LOOPS_NUMBER, -1);
+    SDL_SetNumberProperty(s_ambiencePlayProp, MIX_PROP_PLAY_FADE_IN_MILLISECONDS_NUMBER, AMBIENCE_FADE_MS);
 
     AUDIO_SDL_ApplySoundOptions();
 
@@ -263,6 +352,18 @@ void AUDIO_SDL_Cleanup(void)
         s_ambientAudio[i] = NULL;
     }
     SDL_DestroyProperties(s_ambientPlayProp);
+    for (int i = 0; i < 2; i++)
+    {
+        MIX_DestroyTrack(s_ambienceTracks[i]);
+        s_ambienceTracks[i] = NULL;
+    }
+    for (int i = 0; i < AMBIENCE_KINDS; i++)
+    {
+        if (s_ambienceAudio[i])
+            MIX_DestroyAudio(s_ambienceAudio[i]);
+        s_ambienceAudio[i] = NULL;
+    }
+    SDL_DestroyProperties(s_ambiencePlayProp);
     SDL_DestroyMutex(s_ambientLock);
     s_ambientLock = NULL;
 
@@ -524,7 +625,8 @@ static AudioSfxDriverOps s_sfxOps =
     .PlaySynthNoise = AUDIO_SDL_PlaySynthNoise,
     .PlaySynthTone = AUDIO_SDL_PlaySynthTone,
     .PlaySynthSweepTone = AUDIO_SDL_PlaySynthSweepTone,
-    .SetAmbientWater = AUDIO_SDL_SetAmbientWater
+    .SetAmbientWater = AUDIO_SDL_SetAmbientWater,
+    .SetAmbience = AUDIO_SDL_SetAmbience
 };
 
 AudioMusicDriverOps* AUDIO_SDL_GetMusicOps(void)

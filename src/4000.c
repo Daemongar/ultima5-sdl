@@ -11,6 +11,7 @@
 #include "tiles.h"
 #include "time/time.h"
 
+#include "ambience.h"
 #include "outsubs.h"
 #include "town.h"
 
@@ -143,6 +144,9 @@ void ULTIMA_4102_AudioPlayAmbientSfx(void)
     {
         local_e = 0;
     }
+#endif
+#if defined(ENABLE_AMBIENCE)
+    AMBIENCE_Update();
 #endif
 
 	switch (local_e)

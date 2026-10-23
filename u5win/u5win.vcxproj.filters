@@ -131,6 +131,9 @@
     <ClCompile Include="..\src\hover.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ambience.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\map_name.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -374,6 +377,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\hover.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ambience.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\map_name.h">

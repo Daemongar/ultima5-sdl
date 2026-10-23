@@ -31,6 +31,7 @@ typedef struct Options
     int soundVolume; // 0-10
     bool enhancedSounds; // smooth tones and reverb instead of the PC speaker's beeps
     bool terrainFootsteps;
+    bool ambientSounds;
 
     // Gameplay
     bool mouseAim;

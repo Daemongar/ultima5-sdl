@@ -24,6 +24,16 @@ bool SFXSYN_Sweep(SfxBuffer* out, bool enhanced, int startFreq, int endFreq, int
 // A seamless loop of running water: a fountain's trickle or a waterfall's rush.
 bool SFXSYN_Water(SfxBuffer* out, bool waterfall);
 
+// A seamless loop for the background of a place (the same numbers as
+// AMBIENCE_* in audio.h).
+#define SFXSYN_AMBIENCE_NONE 0
+#define SFXSYN_AMBIENCE_SURF 1
+#define SFXSYN_AMBIENCE_BIRDS 2
+#define SFXSYN_AMBIENCE_CRICKETS 3
+#define SFXSYN_AMBIENCE_DRIPS 4
+#define SFXSYN_AMBIENCE_HEARTH 5
+bool SFXSYN_Ambience(SfxBuffer* out, int kind);
+
 void SFXSYN_Free(SfxBuffer* buffer);
 
 #endif

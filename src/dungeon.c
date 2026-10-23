@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include "ambience.h"
 #include "automap.h"
 #include "blckthrn.h"
 #include "combat.h"
@@ -1652,6 +1653,9 @@ void DUNGEON_1a90(int param_1)
 
 #if defined(ENABLE_AUTOMAP)
     AUTOMAP_Flush();
+#endif
+#if defined(ENABLE_AMBIENCE)
+    AMBIENCE_Update();
 #endif
 }
 
