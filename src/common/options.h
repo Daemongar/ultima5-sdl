@@ -23,6 +23,7 @@ typedef struct Options
     bool enhancedPalette;
     bool wideView; // 17-column map for 16:9 screens instead of the original 11
     bool hoverNames; // name what's under the mouse on the map
+    bool smoothScroll; // slide the map a square at a time instead of jumping
 
     // Sound
     bool music;

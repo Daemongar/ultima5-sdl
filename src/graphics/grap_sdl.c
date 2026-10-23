@@ -442,6 +442,160 @@ static void ComposeFrame(void)
 
 extern void DisplayDebugMessages(void);
 
+#if defined(ENABLE_SMOOTH_SCROLL)
+// Smooth scrolling: when the map is drawn one square from where it was last
+// shown, the picture slides from the old view to the new for a moment instead
+// of jumping a whole square. The game itself carries on (moving again during
+// a slide starts the next one), and the Avatar stays put while the ground
+// slides under him.
+
+typedef struct MapView
+{
+    int id, level, x, y;
+} MapView;
+
+static MapView s_drawnView = {-1, 0, 0, 0}; // the view the map was last drawn at
+static MapView s_shownView = {-1, 0, 0, 0}; // the view in s_lastFrame
+static Uint32* s_lastFrame;                 // the last composed frame, unslid
+static Uint32* s_slideFrom;                 // the frame before the step
+static size_t s_frameSize;
+static bool s_lastFrameValid;
+static bool s_sliding;
+static Uint64 s_slideStart;
+static int s_slideDx, s_slideDy;
+static int s_slideMs = 100;
+
+// Called by ULTIMA_56ac_DrawMap with the view it is about to draw.
+void GRAP_SDL_MapDrawn(int id, int level, int x, int y)
+{
+    s_drawnView = (MapView){id, level, x, y};
+}
+
+// Squares from one coordinate to another; the overworld wraps at 256.
+static int MapStep(int from, int to, bool wraps)
+{
+    int step = to - from;
+    if (wraps)
+    {
+        step &= 0xff;
+        if (step >= 0x80)
+            step -= 0x100;
+    }
+    return step;
+}
+
+static void SlideFrame(Uint32* out, int pitch, Uint64 elapsed)
+{
+    int scale = g_colorScale;
+    int tile = tilePixelSize * scale;
+    int columns = g_presentLayout == PRESENT_LAYOUT_WIDE_MAP ? 11 + 2 * WIDE_EXTRA_COLUMNS : 11;
+    int x0 = MAP_RENDER_LEFT * scale, x1 = x0 + columns * tile;
+    int y0 = MAP_RENDER_TOP * scale, y1 = y0 + 11 * tile;
+    int centerX = x0 + columns / 2 * tile, centerY = y0 + 5 * tile;
+    // The new view still offset towards where it came from, by up to a square.
+    int left = (int)((1.0 - (double)elapsed / s_slideMs) * tile);
+    int offsetX = s_slideDx * left, offsetY = s_slideDy * left;
+
+    for (int y = y0; y < y1; y++)
+    {
+        for (int x = x0; x < x1; x++)
+        {
+            int nx = x - offsetX, ny = y - offsetY;
+            bool inMap = nx >= x0 && nx < x1 && ny >= y0 && ny < y1;
+            bool onAvatar = nx >= centerX && nx < centerX + tile && ny >= centerY && ny < centerY + tile;
+
+            if (inMap && !onAvatar)
+            {
+                out[y * pitch + x] = s_lastFrame[ny * pitch + nx];
+                continue;
+            }
+
+            // The edge the new view hasn't reached yet, and where its Avatar
+            // would be, come from the old view (one square further along).
+            int ox = nx + s_slideDx * tile, oy = ny + s_slideDy * tile;
+            if (ox >= x0 && ox < x1 && oy >= y0 && oy < y1)
+                out[y * pitch + x] = s_slideFrom[oy * pitch + ox];
+            else if (inMap)
+                out[y * pitch + x] = s_lastFrame[ny * pitch + nx];
+        }
+    }
+
+    // The Avatar, still, over the sliding ground. His square in the new view
+    // is the ground he stepped onto (seen in the old view, one square along)
+    // with him drawn on it; where it differs from that ground, it's him.
+    int fromX = centerX + s_slideDx * tile, fromY = centerY + s_slideDy * tile;
+    for (int y = 0; y < tile; y++)
+    {
+        for (int x = 0; x < tile; x++)
+        {
+            Uint32 avatar = s_lastFrame[(centerY + y) * pitch + centerX + x];
+            if (avatar != s_slideFrom[(fromY + y) * pitch + fromX + x])
+                out[(centerY + y) * pitch + centerX + x] = avatar;
+        }
+    }
+}
+
+static void SmoothScroll(Uint32* out, int pitch, int rows)
+{
+    size_t size = (size_t)pitch * rows;
+    if (size != s_frameSize)
+    {
+        // How long a slide takes (smooth_scroll_ms; not on the Options screen).
+        s_slideMs = CONFIG_GetInt("display", "smooth_scroll_ms", 100);
+        if (s_slideMs < 1)
+            s_slideMs = 1;
+
+        free(s_lastFrame);
+        free(s_slideFrom);
+        s_lastFrame = malloc(size * sizeof(Uint32));
+        s_slideFrom = malloc(size * sizeof(Uint32));
+        s_frameSize = s_lastFrame && s_slideFrom ? size : 0;
+        s_lastFrameValid = s_sliding = false;
+        if (s_frameSize == 0)
+            return;
+    }
+
+    bool eligible = g_options.smoothScroll && IsMapScreen() && D_5893_map_id <= 0x20 &&
+                    g_presentLayout != PRESENT_LAYOUT_CENTERED;
+
+    if (memcmp(&s_drawnView, &s_shownView, sizeof(MapView)) != 0)
+    {
+        // A new drawing: slide if it is one square from the last one shown.
+        int dx = MapStep(s_shownView.x, s_drawnView.x, s_drawnView.id == 0);
+        int dy = MapStep(s_shownView.y, s_drawnView.y, s_drawnView.id == 0);
+        s_sliding = eligible && s_lastFrameValid && s_drawnView.id == s_shownView.id &&
+                    s_drawnView.level == s_shownView.level && abs(dx) + abs(dy) == 1;
+        if (s_sliding)
+        {
+            memcpy(s_slideFrom, s_lastFrame, size * sizeof(Uint32));
+            s_slideStart = SDL_GetTicks();
+            s_slideDx = dx;
+            s_slideDy = dy;
+        }
+        s_shownView = s_drawnView;
+    }
+
+    memcpy(s_lastFrame, out, size * sizeof(Uint32));
+    s_lastFrameValid = true;
+
+    if (!s_sliding || !eligible)
+    {
+        s_sliding = false;
+        return;
+    }
+
+    Uint64 elapsed = SDL_GetTicks() - s_slideStart;
+    if (elapsed >= (Uint64)s_slideMs)
+    {
+        s_sliding = false;
+        return;
+    }
+
+    SlideFrame(out, pitch, elapsed);
+    GRAP_BUF_MarkDirty(); // present again next frame to carry on sliding
+}
+#endif
+
 // A point in window coordinates (as mouse events give them) to the game's
 // 640x400 render coordinates, with the wide view's extra width; false if it's
 // outside the picture.
@@ -465,6 +619,9 @@ void GRAP_SDL_FlushFrame(void)
 {
     LinearToRGB();
     ComposeFrame();
+#if defined(ENABLE_SMOOTH_SCROLL)
+    SmoothScroll(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, s_sdlSurface->h);
+#endif
 
     SDL_UpdateTexture(s_sdlTexture, NULL, s_sdlSurface->pixels, s_sdlSurface->pitch);
 

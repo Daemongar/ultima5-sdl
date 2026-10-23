@@ -279,12 +279,20 @@ int ULTIMA_5646(int param_1)
 }
 
 // OK P1
+#if defined(ENABLE_SMOOTH_SCROLL)
+void GRAP_SDL_MapDrawn(int id, int level, int x, int y);
+#endif
+
 void ULTIMA_56ac_DrawMap(void)
 {
     int local_2;
     int local_4;
     int local_6;
     int local_8;
+
+#if defined(ENABLE_SMOOTH_SCROLL)
+    GRAP_SDL_MapDrawn(D_5893_map_id, D_5895_map_level, D_5896_map_x, D_5897_map_y);
+#endif
 
     for (local_8 = 0; local_8 < 11; local_8++)
     {

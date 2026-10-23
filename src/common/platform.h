@@ -195,6 +195,10 @@
 // at night, a hearth's crackle, dripping water underground (see ambience.c).
 //#define ENABLE_AMBIENCE 1
 
+// Slide the map a square at a time when the party moves instead of jumping
+// (smooth_scroll, off by default; see SmoothScroll in graphics/grap_sdl.c).
+//#define ENABLE_SMOOTH_SCROLL 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -236,6 +240,7 @@
 #define ENABLE_KARMA_HINT 1
 #define ENABLE_CLASS_PERKS 1
 #define ENABLE_AMBIENCE 1
+#define ENABLE_SMOOTH_SCROLL 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

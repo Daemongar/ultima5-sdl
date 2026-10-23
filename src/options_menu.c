@@ -66,6 +66,9 @@ static OptionItem s_items[] =
 #if defined(ENABLE_KARMA_HINT)
     {PAGE_DISPLAY, ITEM_TOGGLE, "Karma on Z-stats", &g_options.karmaHint, NULL},
 #endif
+#if defined(ENABLE_SMOOTH_SCROLL)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Smooth scrolling", &g_options.smoothScroll, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},
