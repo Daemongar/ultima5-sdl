@@ -178,6 +178,17 @@ static void ZSTATS_039c(void)
     ULTIMA_1a3e_PrintNumber(D_57a8, 4, 0x20); // Food
     ULTIMA_1850_PrintString(_TEXT(0x9738, "\n Gold: "));
     ULTIMA_1a3e_PrintNumber(D_57aa, 4, 0x20); // Gold
+#if defined(ENABLE_KARMA_HINT)
+    // Karma in the same bands of 20 that choose Lord British's words
+    // (KARMA.DAT), rather than the hidden number itself.
+    if (g_options.karmaHint)
+    {
+        static char* s_karmaWords[] = {"Lost", "Strayed", "Seeker", "Worthy", "Exalted"};
+        int band = D_5888 / 20;
+        ULTIMA_1850_PrintString("\n Karma: ");
+        ULTIMA_1850_PrintString(s_karmaWords[band < 4 ? band : 4]);
+    }
+#endif
     ULTIMA_1850_PrintString(_TEXT(0x9742, "\n\n Keys......."));
     ULTIMA_1a3e_PrintNumber(D_57ac, 2, 0x20); // Keys
     ULTIMA_1850_PrintString(_TEXT(0x9752, "\n Gems......."));

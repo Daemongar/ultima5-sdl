@@ -1300,6 +1300,23 @@ void COMBAT_1236(int param_1)
         D_5c5a[local_6]._2_x = 0;
 }
 
+#if defined(ENABLE_STAT_DAMAGE)
+// The lowest a party member's weapon can roll: Strength for weapons used up
+// close, Dexterity for those that reach further (D_169c, the weapon's range).
+// It raises the low end of the roll, never the weapon's maximum: 1 up to a
+// stat of 12, then 3 at 20, 5 at 25 and 6 at 30.
+static int COMBAT_StatDamageFloor(int attacker, int weapon, int maxDamage)
+{
+    S_55a8* member = &D_55a8_party[D_ba14[attacker].entityIdx];
+    int stat = D_169c[weapon] != 0 ? member->dex : member->str;
+    int floor = (stat - 10) / 3;
+
+    if (floor < 1)
+        floor = 1;
+    return floor < maxDamage ? floor : maxDamage;
+}
+#endif
+
 // OK P1
 // attack
 static int COMBAT_12b0(int param_1, int param_2)
@@ -1332,9 +1349,19 @@ static int COMBAT_12b0(int param_1, int param_2)
             break;
 
         default:
+#if defined(ENABLE_STAT_DAMAGE)
+            local_6 = local_8; // the weapon
+#endif
             local_8 = D_15fc[local_8];
             if (local_8 > 1 && local_8 != 99)
             {
+#if defined(ENABLE_STAT_DAMAGE)
+                if (g_options.statDamage)
+                {
+                    local_8 = ULTIMA_2092_RandomRange(COMBAT_StatDamageFloor(param_1, local_6, local_8), local_8);
+                }
+                else
+#endif
                 local_8 = ULTIMA_2092_RandomRange(1, local_8);
             }
             break;

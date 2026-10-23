@@ -47,6 +47,12 @@ static OptionFlag s_flags[] =
 #if defined(ENABLE_MIX_RECIPES)
     {"gameplay", "mix_recipes", &g_options.mixRecipes, true},
 #endif
+#if defined(ENABLE_STAT_DAMAGE)
+    {"gameplay", "stat_damage", &g_options.statDamage, true},
+#endif
+#if defined(ENABLE_KARMA_HINT)
+    {"display", "karma_hint", &g_options.karmaHint, true},
+#endif
 };
 
 static const char* s_windowModeNames[] = {"fullscreen", "bordered", "windowed"};

@@ -222,8 +222,10 @@ Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load)
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
 A dungeon map (F10) that fills in as you explore.
 Names under the mouse: pointing at the map shows what's there ("a minstrel", "grass"), as Look would, on the overworld, in towns and in combat. It hides when you press a key until the mouse moves again, and can be turned off on the Display page (`hover_names`).
+Karma hint: the Z-stats equipment page shows karma as a word (Lost, Strayed, Seeker, Worthy, Exalted) in the bands of 20 that choose Lord British's messages, instead of only the number Ctrl+K prints. It can be turned off on the Display page (`karma_hint`).
 Recipe helper: when mixing, the spell's reagents from the spell book are already ticked if you have them all, and "How much?" says how many you can make. In Xen Mani and Rel Xen Bet, learned in the game, stay manual.
 Level-up stat gains are weighted by class.
+Stat-based damage: a party member's weapon rolls from a minimum set by Strength (close weapons) or Dexterity (bows, slings and thrown weapons) up to the weapon's usual maximum: 1 up to a stat of 12, 3 at 20, 5 at 25, 6 at 30. The original rolled 1 to the maximum whatever the wielder's stats; monsters are unchanged.
 Bard mana rounds up.
 Vas Mani (Great Heal) works during combat.
 Casting a spell you lack the MP or level for no longer uses up the mixture or MP ("M.P. too low!" / "Level too low!").

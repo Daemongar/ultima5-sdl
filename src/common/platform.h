@@ -177,6 +177,15 @@
 // would (see hover.c).
 //#define ENABLE_HOVER_NAMES 1
 
+// Raise the lowest roll of a party member's weapon with Strength (close
+// weapons) or Dexterity (ranged); the maximum is unchanged. The original
+// rolled 1 to the maximum whatever the wielder's stats.
+//#define ENABLE_STAT_DAMAGE 1
+
+// Show karma on the Z-stats equipment page as a word, in the bands of 20
+// that pick Lord British's messages. The original showed it only with Ctrl+K.
+//#define ENABLE_KARMA_HINT 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -214,6 +223,8 @@
 #define ENABLE_MIX_RECIPES 1
 #define ENABLE_PLAYTEST 1
 #define ENABLE_HOVER_NAMES 1
+#define ENABLE_STAT_DAMAGE 1
+#define ENABLE_KARMA_HINT 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

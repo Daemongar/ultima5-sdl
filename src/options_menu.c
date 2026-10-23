@@ -62,6 +62,9 @@ static OptionItem s_items[] =
 #if defined(ENABLE_HOVER_NAMES)
     {PAGE_DISPLAY, ITEM_TOGGLE, "Names under mouse", &g_options.hoverNames, NULL},
 #endif
+#if defined(ENABLE_KARMA_HINT)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Karma on Z-stats", &g_options.karmaHint, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},
@@ -88,6 +91,9 @@ static OptionItem s_items[] =
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Ultima IV class mana", &g_options.u4ClassMana, NULL},
 #if defined(ENABLE_MIX_RECIPES)
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Recipe helper", &g_options.mixRecipes, NULL},
+#endif
+#if defined(ENABLE_STAT_DAMAGE)
+    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Stat-based damage", &g_options.statDamage, NULL},
 #endif
 };
 
@@ -157,7 +163,7 @@ static int PageItems(int page, OptionItem** items)
 }
 
 // Most items on any page; rows below a short page's items are blanked.
-#define MAX_PAGE_ITEMS 17
+#define MAX_PAGE_ITEMS 18
 #define LABEL_WIDTH 20
 #define VALUE_WIDTH 11
 
@@ -176,8 +182,7 @@ static void DrawStatic(void)
     ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
     DrawFrame();
     PrintCentered(1, "Options");
-    PrintCentered(SCREEN_BOTTOM - 2, "Arrows: choose and change");
-    PrintCentered(SCREEN_BOTTOM - 1, "Tab: next page   Esc: done");
+    PrintCentered(SCREEN_BOTTOM - 1, "Arrows: change  Tab: page  Esc: done");
 }
 
 static void DrawTabs(int page)

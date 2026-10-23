@@ -51,6 +51,8 @@ typedef struct Options
     bool vanishingRings;
     bool u4ClassMana;
     bool mixRecipes;
+    bool statDamage;
+    bool karmaHint;
 } Options;
 
 extern Options g_options;
