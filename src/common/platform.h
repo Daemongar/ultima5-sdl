@@ -203,6 +203,10 @@
 // and words (see key/gamepad_sdl.c).
 //#define ENABLE_GAMEPAD 1
 
+// The Avatar steps as he walks, with walking frames from the full-color tile
+// sheet (see walk_anim.c and tools/make_walk_frames.py).
+//#define ENABLE_WALK_ANIM 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -246,6 +250,7 @@
 #define ENABLE_AMBIENCE 1
 #define ENABLE_SMOOTH_SCROLL 1
 #define ENABLE_GAMEPAD 1
+#define ENABLE_WALK_ANIM 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

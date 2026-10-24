@@ -785,6 +785,13 @@ void GRAP_BUF_LoadColorTileAtlas(u32* pixels, int columns, int tileCount, int ti
     }
 }
 
+// True if the full-color tile sheet is in use and has this tile, including
+// tiles past the original 512 that only the sheet has (walk_anim.c).
+bool GRAP_BUF_HasColorTile(int tileIdx)
+{
+    return s_colorTileAtlas != NULL && tileIdx >= 0 && tileIdx < s_colorTileCount;
+}
+
 // True if the full-color tile has see-through pixels, so whatever is drawn
 // in its square first (the terrain under a creature) shows through them.
 bool GRAP_BUF_TileHasClearPixels(int tileIdx)

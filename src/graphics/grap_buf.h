@@ -79,6 +79,7 @@ extern void GRAP_BUF_LoadColorTileAtlas(u32* pixels, int columns, int tileCount,
 extern void GRAP_BUF_RenderTileRGB(int tileIdx, const u32* palette, u32* out);
 extern void GRAP_BUF_RenderTileRGBOver(int tileIdx, const u32* palette, u32* out);
 extern bool GRAP_BUF_TileHasClearPixels(int tileIdx);
+extern bool GRAP_BUF_HasColorTile(int tileIdx);
 extern void GRAP_BUF_SaveScreen(void);
 extern void GRAP_BUF_RestoreScreen(void);
 extern void GRAP_BUF_ClearColorLayer(void);

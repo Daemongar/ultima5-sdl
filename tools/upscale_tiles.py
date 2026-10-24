@@ -24,7 +24,8 @@ stray pixels. Both keep to the 16-color palette.
 
 --keep copies every tile of an existing sheet that isn't this script's own
 output from either upscaler (with the same --scale and --transparent), so
-hand-drawn tiles survive regenerating the rest.
+hand-drawn tiles survive regenerating the rest, and any rows past the
+original 512 tiles (the Avatar's walking frames).
 
 --transparent makes the black background of creature and object tiles
 (256-511) see-through (magenta), so the game draws them over the terrain:
@@ -311,7 +312,7 @@ def main():
     existing = None
     if keep:
         existing = np.asarray(Image.open(keep).convert('RGB'))
-        if existing.shape != atlas.shape:
+        if existing.shape[1] != atlas.shape[1] or existing.shape[0] < atlas.shape[0]:
             sys.exit(f"--keep {keep} is {existing.shape[1]}x{existing.shape[0]}, not {atlas.shape[1]}x{atlas.shape[0]}")
 
     kept = 0
@@ -326,6 +327,11 @@ def main():
             kept += 1
         else:
             atlas[cell] = render_tile(tile, scale, clear, algorithm)
+
+    if existing is not None and existing.shape[0] > atlas.shape[0]:
+        # Tiles past the original 512, such as the Avatar's walking frames
+        # (tools/make_walk_frames.py), come across as they are.
+        atlas = np.concatenate([atlas, existing[atlas.shape[0]:]], 0)
 
     Image.fromarray(atlas, 'RGB').save(args[1], format='BMP')
     print(f"Wrote {len(tiles)} tiles ({atlas.shape[1]}x{atlas.shape[0]}) to {args[1]} with {algorithm}"

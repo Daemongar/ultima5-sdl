@@ -134,6 +134,9 @@
     <ClCompile Include="..\src\ambience.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\walk_anim.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\map_name.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -386,6 +389,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ambience.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\walk_anim.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\map_name.h">

@@ -26,6 +26,9 @@ static OptionFlag s_flags[] =
 #if defined(ENABLE_SMOOTH_SCROLL)
     {"display", "smooth_scroll", &g_options.smoothScroll, false},
 #endif
+#if defined(ENABLE_WALK_ANIM)
+    {"display", "walk_animation", &g_options.walkAnimation, true},
+#endif
     {"sound", "music", &g_options.music, true},
     {"sound", "sound_effects", &g_options.soundEffects, true},
     {"sound", "enhanced_sound_effects", &g_options.enhancedSounds, true},

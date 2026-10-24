@@ -69,6 +69,9 @@ static OptionItem s_items[] =
 #if defined(ENABLE_SMOOTH_SCROLL)
     {PAGE_DISPLAY, ITEM_TOGGLE, "Smooth scrolling", &g_options.smoothScroll, NULL},
 #endif
+#if defined(ENABLE_WALK_ANIM)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Walking Avatar", &g_options.walkAnimation, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},

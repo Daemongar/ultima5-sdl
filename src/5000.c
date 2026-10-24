@@ -1,5 +1,6 @@
 #include "common/common.h"
 #include "wide_view.h"
+#include "walk_anim.h"
 #include "vars.h"
 #include "funcs.h"
 #include "macros.h"
@@ -304,6 +305,14 @@ void ULTIMA_56ac_DrawMap(void)
                 {
 #if defined(TARGET_SDL)
                     WIDE_PutTerrainUnderActor(local_6, local_8, GetActorMap(local_6, local_8));
+#endif
+#if defined(ENABLE_WALK_ANIM)
+                    // The party, in the middle: a walking frame after a step.
+                    if (local_6 == 5 && local_8 == 5)
+                    {
+                        ULTIMA_10e0_GRAP_51_PutTile(WALK_AvatarTile(0x100 + GetActorMap(local_6, local_8)), local_6, local_8);
+                        continue;
+                    }
 #endif
                     // draw actor
                     ULTIMA_10e0_GRAP_51_PutTile(0x100 + GetActorMap(local_6, local_8), local_6, local_8);

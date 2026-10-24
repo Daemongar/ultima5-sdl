@@ -162,6 +162,8 @@ python3 tools/upscale_tiles.py /path/to/TILES.16 TILES.BMP --scale 4 --transpare
 
 It enlarges each tile with an upscaler applied twice (`--scale 2`, the default, applies it once for 32x32 tiles) to round off diagonal edges: `--algorithm xbr`, used for the included sheet, weighs the colors around each edge for smoother diagonals while keeping single-pixel details, and `scale2x` (the default) is simpler. It then recolors each tile with a softened palette and light top/bottom shading, keeping the original black backgrounds. It is meant as a starting point for hand-drawn detail: `--keep TILES.BMP` copies every tile of an existing sheet that isn't the script's own output, so hand-drawn tiles survive regenerating the rest. Copy the result into the game data directory. `--header` also regenerates `src/graphics/tile_colors.h`, the palette the game uses for animated tiles; rebuild after changing it.
 
+The Avatar's walking frames are six extra tiles in a 17th row of the sheet, made from his tile (0x11c) by `tools/make_walk_frames.py TILES.BMP`: 512 and 513 lift his left and right foot (walking up or down), 514 and 515 are a stride and a passing step walking right, 516 and 517 the same walking left. His only picture faces the viewer, so these lean and swing his legs rather than turn him; drawing true side views by hand into 514-517 would look better. Run the script again after redrawing the Avatar.
+
 Animated tiles (water, lava, flags, fireplaces, shorelines, the clock) keep moving in full color with `ENABLE_ANIMATED_COLOR_TILES`: water and lava scroll their atlas tiles, and any other tile the game rewrites is rendered in full color from its current data.
 
 AI image upscalers tend to shift tiles a few pixels off the grid. `tools/align_tiles.py` finds each tile in such a sheet by comparing it with the current `TILES.BMP` and cuts it onto an exact grid:
@@ -225,6 +227,7 @@ Esc opens the quit prompt.
 Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
 A dungeon map (F10) that fills in as you explore.
+The Avatar walks: on the map he lifts one foot and then the other going up and down, and leans and strides going left and right, from walking frames in the full-color tile sheet. It can be turned off on the Display page (`walk_animation`); `walk_frame_ms` sets how long each step shows.
 Names under the mouse: pointing at the map shows what's there ("a minstrel", "grass"), as Look would, on the overworld, in towns and in combat. It hides when you press a key until the mouse moves again, and can be turned off on the Display page (`hover_names`).
 Karma hint: the Z-stats equipment page shows karma as a word (Lost, Strayed, Seeker, Worthy, Exalted) in the bands of 20 that choose Lord British's messages, instead of only the number Ctrl+K prints. It can be turned off on the Display page (`karma_hint`).
 Recipe helper: when mixing, the spell's reagents from the spell book are already ticked if you have them all, and "How much?" says how many you can make. In Xen Mani and Rel Xen Bet, learned in the game, stay manual.
