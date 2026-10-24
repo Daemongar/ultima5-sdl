@@ -207,6 +207,10 @@
 // sheet (see walk_anim.c and tools/make_walk_frames.py).
 //#define ENABLE_WALK_ANIM 1
 
+// Show the time of day above the date on the panel, which gains a row; the
+// message window below it loses one (see ULTIMA_2900_UpdateVitalsDisplay).
+//#define ENABLE_TIME_DISPLAY 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -251,6 +255,7 @@
 #define ENABLE_SMOOTH_SCROLL 1
 #define ENABLE_GAMEPAD 1
 #define ENABLE_WALK_ANIM 1
+#define ENABLE_TIME_DISPLAY 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

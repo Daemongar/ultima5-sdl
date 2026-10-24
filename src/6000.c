@@ -204,8 +204,15 @@ void ULTIMA_637e_DrawFrame(void)
     ULTIMA_0aa6_GRAP_3f_FillRect(0, 185, 191, 191);
     ULTIMA_0aa6_GRAP_3f_FillRect(0, 0, 6, 191);
     ULTIMA_0aa6_GRAP_3f_FillRect(185, 0, 191, 191);
+#if defined(ENABLE_TIME_DISPLAY)
+    // The box under the party is a row taller, for the time (see
+    // ULTIMA_2900_UpdateVitalsDisplay): its lower divider is a row lower.
+    ULTIMA_0aa6_GRAP_3f_FillRect(313, 0, 319, 87 + 8);
+    ULTIMA_0aa6_GRAP_3f_FillRect(192, 80 + 8, 312, 87 + 8);
+#else
     ULTIMA_0aa6_GRAP_3f_FillRect(313, 0, 319, 87);
     ULTIMA_0aa6_GRAP_3f_FillRect(192, 80, 312, 87);
+#endif
     ULTIMA_0aa6_GRAP_3f_FillRect(192, 0x39, 312, 63);
 
     ULTIMA_1cca_SetTextForegroundColor(D_13b2_frame_color);
@@ -221,15 +228,25 @@ void ULTIMA_637e_DrawFrame(void)
     ULTIMA_0f90_GRAP_Pen(184, 184);
     ULTIMA_0f90_GRAP_Pen(184, 7);
     ULTIMA_0f90_GRAP_Pen(7, 7);
+#if defined(ENABLE_TIME_DISPLAY)
+    ULTIMA_0b10_GRAP_Line(191, 191, 191, 87 + 8);
+    ULTIMA_0f90_GRAP_Pen(319, 87 + 8);
+#else
     ULTIMA_0b10_GRAP_Line(191, 191, 191, 87);
     ULTIMA_0f90_GRAP_Pen(319, 87);
+#endif
     ULTIMA_0b10_GRAP_Line(191, 7, 312, 7);
     ULTIMA_0f90_GRAP_Pen(312, 56);
     ULTIMA_0f90_GRAP_Pen(191, 56);
     ULTIMA_0f90_GRAP_Pen(191, 7);
     ULTIMA_0b10_GRAP_Line(191, 63, 312, 63);
+#if defined(ENABLE_TIME_DISPLAY)
+    ULTIMA_0f90_GRAP_Pen(312, 80 + 8);
+    ULTIMA_0f90_GRAP_Pen(191, 80 + 8);
+#else
     ULTIMA_0f90_GRAP_Pen(312, 80);
     ULTIMA_0f90_GRAP_Pen(191, 80);
+#endif
     ULTIMA_0f90_GRAP_Pen(191, 63);
 
     ULTIMA_1cca_SetTextForegroundColor(D_13b0_white_color);

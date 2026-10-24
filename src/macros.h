@@ -13,6 +13,14 @@
 #define CTRL_CHAR_CENTER_TEXT 0xfc
 #define CTRL_CHAR_UNCENTER_TEXT 0xfb
 
+// The message window's last row (text window 2): the panel above it is a row
+// taller with ENABLE_TIME_DISPLAY (see ULTIMA_637e_DrawFrame).
+#if defined(ENABLE_TIME_DISPLAY)
+#define MESSAGE_WINDOW_LAST_ROW 0xb
+#else
+#define MESSAGE_WINDOW_LAST_ROW 0xc
+#endif
+
 // Keyboard
 
 #define U5_KEY_LEFT 1

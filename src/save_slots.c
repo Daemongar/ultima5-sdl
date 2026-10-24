@@ -250,7 +250,7 @@ void SAVESLOTS_ResumeLoadedGame(void)
     ULTIMA_2e96_SetWindDirection(0);
     ULTIMA_1b94_SelectTextWindow(2);
     ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
-    ULTIMA_1bf2_SetTextPosition(0, 0xc);
+    ULTIMA_1bf2_SetTextPosition(0, MESSAGE_WINDOW_LAST_ROW);
 
     ULTIMA_251e_SwitchDisks(3);
     FILE_ReadSavegameFile("SAVED.GAM");

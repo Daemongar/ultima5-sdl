@@ -981,11 +981,17 @@ int ULTIMA_4d76_FindIndex(char* param_2, int param_1)
 // OK P1
 void ULTIMA_4daa(void)
 {
+#if defined(ENABLE_TIME_DISPLAY)
+	// On the panel's lower divider, a row lower with the time shown.
+	const int y = 8;
+#else
+	const int y = 0;
+#endif
 	ULTIMA_0a70_GRAP_2d_SetPenColor(D_13b2_frame_color);
-	ULTIMA_0aa6_GRAP_3f_FillRect(0xf0, 0x51, 0x107, 0x56);
+	ULTIMA_0aa6_GRAP_3f_FillRect(0xf0, 0x51 + y, 0x107, 0x56 + y);
 	ULTIMA_0a70_GRAP_2d_SetPenColor(D_13b0_white_color);
-	ULTIMA_0c9c_GRAP_39_HorizLine(0xf0, 0x50, 0x107);
-	ULTIMA_0c9c_GRAP_39_HorizLine(0xf0, 0x57, 0x107);
+	ULTIMA_0c9c_GRAP_39_HorizLine(0xf0, 0x50 + y, 0x107);
+	ULTIMA_0c9c_GRAP_39_HorizLine(0xf0, 0x57 + y, 0x107);
 }
 
 // OK P1
@@ -995,7 +1001,11 @@ void ULTIMA_4dea(int param_1)
 
 	local_4 = D_5386_current_text_window_idx;
 	ULTIMA_1b94_SelectTextWindow(0);
+#if defined(ENABLE_TIME_DISPLAY)
+	ULTIMA_1bf2_SetTextPosition(0x1e, 10 + 1);
+#else
 	ULTIMA_1bf2_SetTextPosition(0x1e, 10);
+#endif
 	ULTIMA_4c2a();
 	ULTIMA_16ba_PrintChar(param_1);
 	ULTIMA_4cce();
@@ -1076,6 +1086,10 @@ void ULTIMA_4f7c(int param_1)
 		D_5880 = D_587f;
 		if (D_587a != 'T')
 		{
+#if defined(ENABLE_TIME_DISPLAY)
+			// The time on the panel, at the next prompt.
+			D_a9fa = 1;
+#endif
 			D_5881 += param_1;
 			ULTIMA_3f36_DecreaseByte(&D_58a7, param_1);
 			ULTIMA_3f36_DecreaseByte(&D_58a6, param_1);

@@ -744,7 +744,12 @@ void INTRO_0986_Main(void) // intro_main (initialize video) (8b46)
         ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
         ULTIMA_1c22_SetTextWindowSize(0, 0, 0, 0x27, 0x18);
         ULTIMA_1c22_SetTextWindowSize(1, 0x18, 1, 0x27, 9);
+#if defined(ENABLE_TIME_DISPLAY)
+        // A row lower: the box above it has the time (ULTIMA_637e_DrawFrame).
+        ULTIMA_1c22_SetTextWindowSize(2, 0x18, 0xb + 1, 0x27, 0x17);
+#else
         ULTIMA_1c22_SetTextWindowSize(2, 0x18, 0xb, 0x27, 0x17);
+#endif
         if (local_a == 0x4a) // 'J'
         {
             local_10 = 0x4a; // 'J'
@@ -853,7 +858,7 @@ void INTRO_0986_Main(void) // intro_main (initialize video) (8b46)
             ULTIMA_637e_DrawFrame();
             ULTIMA_2e96_SetWindDirection(0);
             ULTIMA_1b94_SelectTextWindow(2);
-            ULTIMA_1bf2_SetTextPosition(0, 0xc);
+            ULTIMA_1bf2_SetTextPosition(0, MESSAGE_WINDOW_LAST_ROW);
             if (D_5893_map_id == 0x40)
             {
                 while (ULTIMA_0ff4_LoadTileset(D_25f0[0]) == 0)

@@ -8,7 +8,9 @@
 #include "time/time.h"
 #include "playtest.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 // OK P1
@@ -617,6 +619,42 @@ void ULTIMA_2884_UpdateGoldDisplay(void)
 }
 
 // OK P1
+#if defined(ENABLE_TIME_DISPLAY)
+// Centers text on a row of the panel's 16 columns, padding the rest.
+static void PrintPanelLine(const char* text)
+{
+    int width = 16;
+    int length = (int)strlen(text);
+    int x = 0;
+
+    for (; x < (width - length) / 2; x++)
+        ULTIMA_16ba_PrintChar(' ');
+    ULTIMA_1850_PrintString((char*)text);
+    for (x += length; x < width - 1; x++)
+        ULTIMA_16ba_PrintChar(' ');
+}
+
+// The time ("1:05 PM", as the clocks in Look show it) under food and gold,
+// and the date under it, in the row ULTIMA_637e_DrawFrame adds to the box.
+// The date's row is past text window 1, so it is printed in window 0 (the
+// whole screen).
+static void ULTIMA_PrintTimeAndDate(void)
+{
+    char text[24];
+    int hour = D_587f % 12 == 0 ? 12 : D_587f % 12;
+
+    sprintf(text, "%d:%02d %s", hour, D_5881, D_587f < 12 ? "AM" : "PM");
+    ULTIMA_1bf2_SetTextPosition(0, 8);
+    PrintPanelLine(text);
+
+    sprintf(text, "%d-%d-%d", D_587d, D_587e, D_5874);
+    ULTIMA_1b94_SelectTextWindow(0);
+    ULTIMA_1bf2_SetTextPosition(24, 10);
+    PrintPanelLine(text);
+    ULTIMA_1b94_SelectTextWindow(1);
+}
+#endif
+
 void ULTIMA_2900_UpdateVitalsDisplay(void)
 {
     int local_2;
@@ -656,6 +694,9 @@ void ULTIMA_2900_UpdateVitalsDisplay(void)
         ULTIMA_2884_UpdateGoldDisplay();
     }
 
+#if defined(ENABLE_TIME_DISPLAY)
+    ULTIMA_PrintTimeAndDate();
+#else
     ULTIMA_1850_PrintString(_TEXT(0x54c3, "\n   "));
 
     if ((D_587d < 10) && (D_587e < 10))
@@ -674,6 +715,7 @@ void ULTIMA_2900_UpdateVitalsDisplay(void)
     {
         ULTIMA_16ba_PrintChar(' ');
     }
+#endif
 
     ULTIMA_1bf2_SetTextPosition(6, 6);
 

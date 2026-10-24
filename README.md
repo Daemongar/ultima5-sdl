@@ -227,6 +227,7 @@ Esc opens the quit prompt.
 Quicksave (F5) and quickload (F9), plus nine save slots (F6 to save, F7 to load). The original kept a single save.
 A journal (F4) of what people have said in answer to your questions, by town, person and keyword, with a word search.
 A dungeon map (F10) that fills in as you explore.
+The time of day ("8:45 AM") is shown above the date on the panel; the panel's lower box is a row taller and the message window a row shorter.
 The Avatar walks: on the map he lifts one foot and then the other going up and down, and leans and strides going left and right, from walking frames in the full-color tile sheet. It can be turned off on the Display page (`walk_animation`); `walk_frame_ms` sets how long each step shows.
 Names under the mouse: pointing at the map shows what's there ("a minstrel", "grass"), as Look would, on the overworld, in towns and in combat. It hides when you press a key until the mouse moves again, and can be turned off on the Display page (`hover_names`).
 Karma hint: the Z-stats equipment page shows karma as a word (Lost, Strayed, Seeker, Worthy, Exalted) in the bands of 20 that choose Lord British's messages, instead of only the number Ctrl+K prints. It can be turned off on the Display page (`karma_hint`).
