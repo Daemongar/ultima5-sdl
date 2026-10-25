@@ -206,6 +206,7 @@ Rendered at 640×400 with 32×32 tiles instead of 320×200.
 An optional full-color tile set (TILES.BMP) replaces any of the original 16-color tiles; with its 64×64 tiles the map is drawn at 1280×800.
 Animated tiles (water, lava, flags, fireplaces, shorelines, the clock) keep animating in full color.
 An optional Wide view (16:9) shows a 17-column map outdoors and in towns instead of 11, with the stats panel at the right edge; combat keeps its 11x11 battlefield.
+Lighting (Display page, `lighting`): dawn and dusk turn the map warm and dim and night turns it dark blue; around the party is a soft circle of its light (warm for a torch, white for a light spell) reaching as far as the game lets you see, and torches, braziers, fireplaces, street lamps, candelabra, stoves, lava and shrine flames glow and flicker. It only colors what the game shows; nothing hidden is revealed. Overworld, underworld and towns.
 Optional smooth scrolling (Display page, off by default): when the party steps, the map slides into place over a tenth of a second instead of jumping a square; the Avatar stays still. Outdoors and in towns, wide view included. `smooth_scroll_ms` in ultima5.ini sets how long a slide takes.
 A softer, less oversaturated version of the 16-color palette.
 Sound

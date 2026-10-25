@@ -129,6 +129,53 @@ static bool InLineOfSight(int dx, int dy)
     return true;
 }
 
+// Lamp light: at night the game also shows squares near its light sources
+// (D_6a9a: lamps, torches, fires, moongates), as ULTIMA_5e4a works out for
+// the 11x11 view: within a squared distance of LAMP_LIGHT of a source, with
+// nothing blocking the view from it. The extra squares follow the same rule,
+// or a lamp beside them would light only the half of the street inside the
+// 11x11 view. Squares in offsets from the party.
+#define LAMP_LIGHT 10   // the light level ULTIMA_5e4a gives each source
+#define LAMP_SEARCH 3   // the furthest a source lights, in squares
+
+// Nothing that blocks the view on the straight line strictly between two
+// squares (the same steps as InLineOfSight).
+static bool ClearBetween(int x0, int y0, int x1, int y1)
+{
+    int dx = x1 - x0, dy = y1 - y0;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    for (int i = 1; i < steps; i++)
+    {
+        int x = x0 + (dx * i * 2 + (dx >= 0 ? steps : -steps)) / (2 * steps);
+        int y = y0 + (dy * i * 2 + (dy >= 0 ? steps : -steps)) / (2 * steps);
+        int tile = TileAt(x, y);
+
+        if (tile < 0 || BlocksView((byte)tile))
+            return false;
+    }
+    return true;
+}
+
+static bool LitByLamp(int dx, int dy)
+{
+    for (int ly = dy - LAMP_SEARCH; ly <= dy + LAMP_SEARCH; ly++)
+    {
+        for (int lx = dx - LAMP_SEARCH; lx <= dx + LAMP_SEARCH; lx++)
+        {
+            int tile = TileAt(lx, ly);
+            int d2 = (lx - dx) * (lx - dx) + (ly - dy) * (ly - dy);
+
+            if (tile >= 0 && d2 < LAMP_LIGHT && memchr(D_6a9a, tile, sizeof(D_6a9a)) &&
+                ClearBetween(lx, ly, dx, dy))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // The map tile at (dx, dy) from the party, or from the battlefield's top-left
 // in combat; -1 if there is none.
 static int MapTileAt(int dx, int dy)
@@ -194,7 +241,8 @@ static int ExtraTile(int dx, int dy, int* under, int* look)
 
     *under = -1;
     *look = -1;
-    if (light < DAYLIGHT && dx * dx + dy * dy > light)
+    // Past the party's light, a lamp may still light the square.
+    if (light < DAYLIGHT && dx * dx + dy * dy > light && !(InLineOfSight(dx, dy) && LitByLamp(dx, dy)))
         return -1;
     if (!InLineOfSight(dx, dy))
         return -1;

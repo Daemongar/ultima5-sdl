@@ -25,6 +25,7 @@ typedef struct Options
     bool hoverNames; // name what's under the mouse on the map
     bool smoothScroll; // slide the map a square at a time instead of jumping
     bool walkAnimation; // the Avatar steps as he walks
+    bool lighting; // dusk, night and the glow of fires and lamps on the map
 
     // Sound
     bool music;

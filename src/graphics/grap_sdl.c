@@ -7,6 +7,7 @@
 #include "grap_buf.h"
 #include "grap_ops.h"
 #include "hover.h"
+#include "lighting.h"
 #include "origin.h"
 #include "wd.h"
 
@@ -464,6 +465,7 @@ static bool s_sliding;
 static Uint64 s_slideStart;
 static int s_slideDx, s_slideDy;
 static int s_slideMs = 100;
+static int s_slideOffsetX, s_slideOffsetY; // the map's shift this frame, for the lighting
 
 // Called by ULTIMA_56ac_DrawMap with the view it is about to draw.
 void GRAP_SDL_MapDrawn(int id, int level, int x, int y)
@@ -495,6 +497,8 @@ static void SlideFrame(Uint32* out, int pitch, Uint64 elapsed)
     // The new view still offset towards where it came from, by up to a square.
     int left = (int)((1.0 - (double)elapsed / s_slideMs) * tile);
     int offsetX = s_slideDx * left, offsetY = s_slideDy * left;
+    s_slideOffsetX = offsetX;
+    s_slideOffsetY = offsetY;
 
     for (int y = y0; y < y1; y++)
     {
@@ -577,6 +581,7 @@ static void SmoothScroll(Uint32* out, int pitch, int rows)
 
     memcpy(s_lastFrame, out, size * sizeof(Uint32));
     s_lastFrameValid = true;
+    s_slideOffsetX = s_slideOffsetY = 0;
 
     if (!s_sliding || !eligible)
     {
@@ -621,6 +626,19 @@ void GRAP_SDL_FlushFrame(void)
     ComposeFrame();
 #if defined(ENABLE_SMOOTH_SCROLL)
     SmoothScroll(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, s_sdlSurface->h);
+#endif
+#if defined(ENABLE_LIGHTING)
+    // After the slide, so the party's light stays on the Avatar.
+    if (IsMapScreen() && g_presentLayout != PRESENT_LAYOUT_CENTERED)
+    {
+#if defined(ENABLE_SMOOTH_SCROLL)
+        int slideX = s_slideOffsetX, slideY = s_slideOffsetY;
+#else
+        int slideX = 0, slideY = 0;
+#endif
+        if (LIGHTING_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, slideX, slideY))
+            GRAP_BUF_MarkDirty(); // present again to keep the flames flickering
+    }
 #endif
 
     SDL_UpdateTexture(s_sdlTexture, NULL, s_sdlSurface->pixels, s_sdlSurface->pitch);

@@ -72,6 +72,9 @@ static OptionItem s_items[] =
 #if defined(ENABLE_WALK_ANIM)
     {PAGE_DISPLAY, ITEM_TOGGLE, "Walking Avatar", &g_options.walkAnimation, NULL},
 #endif
+#if defined(ENABLE_LIGHTING)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Lighting", &g_options.lighting, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},

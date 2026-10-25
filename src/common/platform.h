@@ -211,6 +211,10 @@
 // message window below it loses one (see ULTIMA_2900_UpdateVitalsDisplay).
 //#define ENABLE_TIME_DISPLAY 1
 
+// Light the map as it is shown: dawn, dusk and night colors, a soft circle of
+// the party's light, and glowing fires and lamps (see graphics/lighting.c).
+//#define ENABLE_LIGHTING 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -256,6 +260,7 @@
 #define ENABLE_GAMEPAD 1
 #define ENABLE_WALK_ANIM 1
 #define ENABLE_TIME_DISPLAY 1
+#define ENABLE_LIGHTING 1
 //#define ENABLE_TRANSLATION 1
 #endif
 
