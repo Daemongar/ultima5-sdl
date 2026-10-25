@@ -212,6 +212,9 @@
     <ClCompile Include="..\src\graphics\lighting.c">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphics\spellfx.c">
+      <Filter>graphics</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\graphics\grap_vga.c">
       <Filter>graphics</Filter>
     </ClCompile>
@@ -326,6 +329,9 @@
       <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphics\lighting.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\spellfx.h">
       <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphics\grap_ops.h">

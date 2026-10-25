@@ -26,6 +26,7 @@ typedef struct Options
     bool smoothScroll; // slide the map a square at a time instead of jumping
     bool walkAnimation; // the Avatar steps as he walks
     bool lighting; // dusk, night and the glow of fires and lamps on the map
+    bool spellEffects; // spells sparkle, burst and glow instead of inverting the map
 
     // Sound
     bool music;

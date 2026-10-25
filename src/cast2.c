@@ -11,18 +11,31 @@
 
 #include "cast2.h"
 #include "combat.h"
+#include "graphics/spellfx.h"
 
 // OK P1
 void CAST2_0000_CastEffect(int param_1)
 {
     if (param_1 < 9)
     {
+#if defined(ENABLE_SPELL_FX)
+        // A burst of light in place of the inverted map.
+        bool flashed = SPELLFX_Flash(param_1);
+#else
+        bool flashed = false;
+#endif
         ULTIMA_223c_AudioWhiteNoise(800, param_1 * 0x640 + 8000, 700);
-        ULTIMA_0a70_GRAP_2d_SetPenColor(D_13b0_white_color);
-        ULTIMA_0b86_GRAP_XorFillRect(8, 8, 0xb7, 0xb7);
+        if (!flashed)
+        {
+            ULTIMA_0a70_GRAP_2d_SetPenColor(D_13b0_white_color);
+            ULTIMA_0b86_GRAP_XorFillRect(8, 8, 0xb7, 0xb7);
+        }
         ULTIMA_2192_AudioPulse(D_4af6[param_1], 1, param_1 * 4000 + 10000, D_4b08[param_1], D_4b2c[param_1]);
         ULTIMA_2192_AudioPulse(D_4af6[param_1], 1, param_1 * 4000 + 10000, D_4b1a[param_1], -D_4b2c[param_1]);
-        ULTIMA_0b86_GRAP_XorFillRect(8, 8, 0xb7, 0xb7);
+        if (!flashed)
+        {
+            ULTIMA_0b86_GRAP_XorFillRect(8, 8, 0xb7, 0xb7);
+        }
     }
     else
     {

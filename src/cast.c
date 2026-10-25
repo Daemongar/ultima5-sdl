@@ -12,6 +12,7 @@
 #include "comsubs.h"
 #include "dnglook.h"
 #include "dungeon.h"
+#include "graphics/spellfx.h"
 #include "lookobj.h"
 #include "town.h"
 #include "zstats.h"
@@ -1092,6 +1093,9 @@ int CAST_0dba_CastSpellCmd(void)
 #if defined(ENABLE_NO_WASTED_CASTS)
             g_castPromptCancelled = 0;
 #endif
+#if defined(ENABLE_SPELL_FX)
+            SPELLFX_Cast(local_4);
+#endif
             switch (local_4)
             {
             case 0:
@@ -1988,6 +1992,9 @@ static int CAST_1bb0(int param_1, int param_2, int param_3)
         ULTIMA_0a70_GRAP_2d_SetPenColor(param_3);
         ULTIMA_0c64_GRAP_30_Pset(param_1, param_2);
         ULTIMA_0c64_GRAP_30_Pset(param_1 + 1, param_2);
+#if defined(ENABLE_SPELL_FX)
+        SPELLFX_StormPoint(param_1, param_2);
+#endif
         ULTIMA_22e2_PcspkOn(ULTIMA_2092_RandomRange(100, 10000));
 
         if ((param_2 & 1) != 0)
@@ -2214,6 +2221,9 @@ static void CAST_1f60(int param_1, int param_2, int param_3)
         // df30
         ULTIMA_223c_AudioWhiteNoise(800, local_10a, 700);
 
+#if defined(ENABLE_SPELL_FX)
+        SPELLFX_BeginStorm(param_2);
+#endif
         local_10e = CAST_1c36(local_82, local_102, param_3, param_1, local_10e);
         local_10e++;
 

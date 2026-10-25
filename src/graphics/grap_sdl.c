@@ -8,6 +8,7 @@
 #include "grap_ops.h"
 #include "hover.h"
 #include "lighting.h"
+#include "spellfx.h"
 #include "topics.h"
 #include "origin.h"
 #include "wd.h"
@@ -640,6 +641,10 @@ void GRAP_SDL_FlushFrame(void)
         if (LIGHTING_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, slideX, slideY))
             GRAP_BUF_MarkDirty(); // present again to keep the flames flickering
     }
+#endif
+#if defined(ENABLE_SPELL_FX)
+    if (SPELLFX_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4))
+        GRAP_BUF_MarkDirty(); // present again while the effects play
 #endif
 
     SDL_UpdateTexture(s_sdlTexture, NULL, s_sdlSurface->pixels, s_sdlSurface->pitch);

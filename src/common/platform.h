@@ -219,6 +219,11 @@
 // with Up, Down or Tab instead of typing (see topics.c).
 //#define ENABLE_TALK_TOPICS 1
 
+// Spell effects in full color: sparks round the caster, a burst of light in
+// place of the inverted map, glowing bolts, missiles and storms (see
+// graphics/spellfx.c).
+//#define ENABLE_SPELL_FX 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -266,6 +271,7 @@
 #define ENABLE_TIME_DISPLAY 1
 #define ENABLE_LIGHTING 1
 #define ENABLE_TALK_TOPICS 1
+#define ENABLE_SPELL_FX 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

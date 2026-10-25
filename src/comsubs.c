@@ -9,6 +9,7 @@
 #include "cast2.h"
 #include "combat.h"
 #include "comsubs.h"
+#include "graphics/spellfx.h"
 #include "sjog.h"
 
 // OK P1
@@ -750,6 +751,13 @@ static void COMSUBS_0a68(int param_1, int param_2, int param_3)
 void COMSUBS_0bf8(int param_1, int param_2, int param_3)
 {
     ULTIMA_43ae_AudioSweepTone(400, 0x2ee, 5, 0x96);
+#if defined(ENABLE_SPELL_FX)
+    // The original's bolt spells hit at once; a bolt flies to the target first.
+    if (param_3 >= 0x30 && param_3 <= 0x36 && (D_ba14[param_1].flags & COMBAT_FLAGS_PLAYER) != 0)
+    {
+        SPELLFX_Bolt(D_ba14[param_1].x, D_ba14[param_1].y, D_ba14[param_2].x, D_ba14[param_2].y, param_3);
+    }
+#endif
     ULTIMA_16ba_PrintChar(10);
     if (COMBAT_14d6(param_2, param_1, -D_588f, param_3) != 0)
     {
@@ -1192,6 +1200,10 @@ int COMSUBS_12de(int param_1, int param_2, int param_3, int param_4, int param_5
         }
 
         COMSUBS_0f4a(*local_e, *local_12, local_a, param_5, local_e, local_12);
+#if defined(ENABLE_SPELL_FX)
+        // D_589d is the weapon or spell in combat; elsewhere it's stale.
+        SPELLFX_MissilePoint(*local_e, *local_12, param_5, D_5893_map_id > 0x7f ? D_589d : -1);
+#endif
         ULTIMA_20c8_SomeDelay(1, 0x28);
         ULTIMA_0ace_GRAP_18_TransferArea(1, 0, (*local_e & 0xf8) - 8, *local_12 - 8, (*local_e & 0xf8) + 0xf, *local_12 + 0xf);
 
@@ -1217,9 +1229,15 @@ int COMSUBS_12de(int param_1, int param_2, int param_3, int param_4, int param_5
 
         if (ULTIMA_3f6e(D_5876, D_5878) == 0 && (param_1 != D_5876 || param_2 != D_5878))
         {
+#if defined(ENABLE_SPELL_FX)
+            SPELLFX_MissileLanded(*local_e, *local_12, param_5, D_5893_map_id > 0x7f ? D_589d : -1);
+#endif
             return 0;
         }
     }
 
+#if defined(ENABLE_SPELL_FX)
+    SPELLFX_MissileLanded(local_4, local_8, param_5, D_5893_map_id > 0x7f ? D_589d : -1);
+#endif
     return 1;
 }
