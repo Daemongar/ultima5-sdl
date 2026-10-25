@@ -215,6 +215,10 @@
 // the party's light, and glowing fires and lamps (see graphics/lighting.c).
 //#define ENABLE_LIGHTING 1
 
+// List the conversation topics found so far over the map, to click or pick
+// with Up, Down or Tab instead of typing (see topics.c).
+//#define ENABLE_TALK_TOPICS 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -261,6 +265,7 @@
 #define ENABLE_WALK_ANIM 1
 #define ENABLE_TIME_DISPLAY 1
 #define ENABLE_LIGHTING 1
+#define ENABLE_TALK_TOPICS 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

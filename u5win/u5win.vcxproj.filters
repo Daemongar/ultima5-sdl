@@ -161,6 +161,9 @@
     <ClCompile Include="..\src\talk.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\topics.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\town.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -464,6 +467,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\talk.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\topics.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\zstats.h">

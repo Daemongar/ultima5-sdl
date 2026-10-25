@@ -88,6 +88,9 @@ static OptionItem s_items[] =
 
     {PAGE_COMBAT, ITEM_TOGGLE, "Mouse aiming", &g_options.mouseAim, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Dialog improvements", &g_options.dialogImprovements, NULL},
+#if defined(ENABLE_TALK_TOPICS)
+    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Topic list in talk", &g_options.talkTopics, NULL},
+#endif
     {PAGE_COMBAT, ITEM_TOGGLE, "Smarter monsters", &g_options.smarterAi, NULL},
     {PAGE_COMBAT, ITEM_TOGGLE, "Party shares exp.", &g_options.partyExp, NULL},
     {PAGE_COMBAT, ITEM_TOGGLE, "Group exp. bonus", &g_options.groupExpBonus, NULL},

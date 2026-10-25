@@ -6,6 +6,7 @@
 #include "vars.h"
 
 #include "hover.h"
+#include "topics.h"
 
 #if defined(ENABLE_HOVER_NAMES)
 
@@ -188,6 +189,11 @@ void HOVER_Draw(SDL_Renderer* renderer)
 
     if (!g_options.hoverNames || !s_mouseInside || s_hiddenByKey)
         return;
+#if defined(ENABLE_TALK_TOPICS)
+    // The topic list is over the map.
+    if (TOPICS_IsShowing())
+        return;
+#endif
     if (!GRAP_SDL_WindowToRender(s_mouseX, s_mouseY, &renderX, &renderY))
         return;
     if ((entry = EntryAt(renderX, renderY)) < 0)

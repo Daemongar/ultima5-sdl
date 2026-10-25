@@ -13,6 +13,7 @@
 #include "shoppes2.h"
 #include "shoppes3.h"
 #include "talk.h"
+#include "topics.h"
 #include "town.h"
 
 #define TALK_KEY_NAME 0
@@ -32,6 +33,11 @@
 
 static int TALK_0f32_ProcessChar(byte param_1);
 static void TALK_127e_StartTalk(int a);
+
+#if defined(ENABLE_TALK_TOPICS)
+// Set by TALK_0e78_AskName, whose question offers the Avatar's name.
+static bool s_askingName;
+#endif
 
 #if defined(ENABLE_DIALOG_IMPROVEMENTS)
 // Shown while a long reply waits for a key before scrolling on.
@@ -539,6 +545,9 @@ static void TALK_04e2_PrintWord(void)
 #if defined(ENABLE_JOURNAL)
             JOURNAL_CaptureChar(local_6);
 #endif
+#if defined(ENABLE_TALK_TOPICS)
+            TOPICS_CaptureChar(local_6);
+#endif
 
             if (ULTIMA_1f12_GetCurrentTextX() != 0 || local_6 != 0x20)
             {
@@ -926,7 +935,14 @@ static void TALK_0a2c_GetString(void)
     int local_4;
 
     TALK_04e2_PrintWord();
+#if defined(ENABLE_TALK_TOPICS)
+    // D_4af2 is set while the person waits for an answer to their question.
+    TOPICS_GetString(D_bcf8, TALK_INPUT_MAX,
+                     s_askingName ? TOPICS_NAME : D_4af2 != 0 ? TOPICS_ANSWER : TOPICS_INTEREST);
+    s_askingName = false;
+#else
     ULTIMA_3b1c_GetString(D_bcf8, TALK_INPUT_MAX);
+#endif
 
 #if defined(ENABLE_DIALOG_IMPROVEMENTS)
     // Uppercase the buffer so all keyword matching is case-insensitive regardless
@@ -1059,6 +1075,9 @@ static int TALK_0b04(void)
         }
 #if defined(ENABLE_JOURNAL)
         JOURNAL_BeginTopic(D_bcf8);
+#endif
+#if defined(ENABLE_TALK_TOPICS)
+        TOPICS_Asked(D_bcf8);
 #endif
         TALK_04d2_PrintCr();
         TALK_04d2_PrintCr();
@@ -1351,6 +1370,9 @@ static void TALK_0e78_AskName(void)
     TALK_04e2_PrintWord();
     ULTIMA_1850_PrintString(_TEXT(0x9468, "What is thy name?\"\n"));
     ULTIMA_1850_PrintString(_TEXT(0x947c, "\nYou respond-\n:"));
+#if defined(ENABLE_TALK_TOPICS)
+    s_askingName = true;
+#endif
     TALK_0a2c_GetString();
 
     D_4aee = D_4aef = 0;
@@ -1706,6 +1728,9 @@ static void TALK_127e_StartTalk(int param_1)
 #if defined(ENABLE_JOURNAL)
     JOURNAL_BeginConversation(param_1);
 #endif
+#if defined(ENABLE_TALK_TOPICS)
+    TOPICS_BeginConversation(param_1);
+#endif
 
     if (TALK_111c() == 0)
     {
@@ -1718,6 +1743,9 @@ static void TALK_127e_StartTalk(int param_1)
 #if defined(ENABLE_JOURNAL)
     // A reply that ended the conversation.
     JOURNAL_EndTopic();
+#endif
+#if defined(ENABLE_TALK_TOPICS)
+    TOPICS_EndConversation();
 #endif
 
     TALK_1180();

@@ -41,6 +41,9 @@ static OptionFlag s_flags[] =
 #endif
     {"gameplay", "mouse_aim", &g_options.mouseAim, true},
     {"gameplay", "dialog_improvements", &g_options.dialogImprovements, true},
+#if defined(ENABLE_TALK_TOPICS)
+    {"gameplay", "talk_topics", &g_options.talkTopics, true},
+#endif
     {"gameplay", "smarter_ai", &g_options.smarterAi, true},
     {"gameplay", "party_exp", &g_options.partyExp, true},
     {"gameplay", "group_exp_bonus", &g_options.groupExpBonus, true},

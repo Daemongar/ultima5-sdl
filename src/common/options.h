@@ -39,6 +39,7 @@ typedef struct Options
     // Gameplay
     bool mouseAim;
     bool dialogImprovements;
+    bool talkTopics; // list the topics found so far while talking
     bool smarterAi;
     bool partyExp;
     bool groupExpBonus;

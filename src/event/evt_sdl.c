@@ -4,6 +4,7 @@
 
 #include "event.h"
 #include "hover.h"
+#include "topics.h"
 #include "key/gamepad.h"
 
 #include <SDL3/SDL.h>
@@ -49,6 +50,9 @@ void EVT_PollMessages(void)
 #if defined(ENABLE_HOVER_NAMES)
 			HOVER_MouseMoved(ev.motion.x, ev.motion.y);
 #endif
+#if defined(ENABLE_TALK_TOPICS)
+			TOPICS_MouseMoved(ev.motion.x, ev.motion.y);
+#endif
 #if defined(ENABLE_MOUSE_AIM)
 			if (g_options.mouseAim)
 				KEY_SDL_ProcessMouseMotion(ev.motion);
@@ -71,12 +75,16 @@ void EVT_PollMessages(void)
 			break;
 #endif
 
-#if defined(ENABLE_MOUSE_AIM)
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+#if defined(ENABLE_TALK_TOPICS)
+			if (ev.button.button == SDL_BUTTON_LEFT && TOPICS_MouseDown(ev.button.x, ev.button.y))
+				break;
+#endif
+#if defined(ENABLE_MOUSE_AIM)
 			if (g_options.mouseAim)
 				KEY_SDL_ProcessMouseButtonDown(ev.button);
-			break;
 #endif
+			break;
 		}
 	}
 }
