@@ -27,6 +27,7 @@ typedef struct Options
     bool walkAnimation; // the Avatar steps as he walks
     bool lighting; // dusk, night and the glow of fires and lamps on the map
     bool spellEffects; // spells sparkle, burst and glow instead of inverting the map
+    bool weather; // clouds, rain, storms and fog outdoors
 
     // Sound
     bool music;

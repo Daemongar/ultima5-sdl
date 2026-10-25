@@ -71,7 +71,7 @@ static Uint64 s_ambientLastCall;
 // The background of a place (surf, birds, crickets, drips, a hearth): a loop
 // on one of two tracks, so moving from one kind of place to another
 // cross-fades. Like the water, it plays while the game keeps asking for it.
-#define AMBIENCE_KINDS (AMBIENCE_HEARTH + 1)
+#define AMBIENCE_KINDS (AMBIENCE_RAIN + 1)
 #define AMBIENCE_TIMEOUT_MS 2000
 #define AMBIENCE_FADE_MS 1500
 
@@ -605,6 +605,34 @@ static void AUDIO_SDL_PlaySynthSweepTone(int startFreq, int endFreq, int tickSte
     SFXSYN_Free(&sound);
 }
 
+static void AUDIO_SDL_PlayThunder(int loudness)
+{
+    SfxBuffer sound;
+    if (SFXSYN_Thunder(&sound, loudness))
+    {
+        Sint16* pcm = (Sint16*)malloc((size_t)sound.count * sizeof(Sint16));
+        if (pcm)
+        {
+            for (int i = 0; i < sound.count; i++)
+                pcm[i] = (Sint16)(SDL_clamp(sound.samples[i], -1.0f, 1.0f) * 32767.0f);
+            SDL_AudioSpec spec = { SDL_AUDIO_S16, 1, SFXSYN_RATE };
+            MIX_Audio* audio = MIX_LoadRawAudio(s_mixer, pcm, (size_t)sound.count * sizeof(Sint16), &spec);
+            free(pcm);
+            if (audio)
+            {
+                int v = AUDIO_SDL_PickVoice();
+                MIX_SetTrackAudio(s_sfxVoices[v], audio);
+                MIX_PlayTrack(s_sfxVoices[v], 0);
+                if (s_sfxVoiceAudio[v])
+                    MIX_DestroyAudio(s_sfxVoiceAudio[v]);
+                s_sfxVoiceAudio[v] = audio;
+                s_sfxVoiceStart[v] = SDL_GetTicksNS();
+            }
+        }
+    }
+    SFXSYN_Free(&sound);
+}
+
 static AudioMusicDriverOps s_musicOps =
 {
     .Initialize = AUDIO_SDL_Init,
@@ -626,7 +654,8 @@ static AudioSfxDriverOps s_sfxOps =
     .PlaySynthTone = AUDIO_SDL_PlaySynthTone,
     .PlaySynthSweepTone = AUDIO_SDL_PlaySynthSweepTone,
     .SetAmbientWater = AUDIO_SDL_SetAmbientWater,
-    .SetAmbience = AUDIO_SDL_SetAmbience
+    .SetAmbience = AUDIO_SDL_SetAmbience,
+    .PlayThunder = AUDIO_SDL_PlayThunder
 };
 
 AudioMusicDriverOps* AUDIO_SDL_GetMusicOps(void)

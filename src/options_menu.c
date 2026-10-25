@@ -78,6 +78,9 @@ static OptionItem s_items[] =
 #if defined(ENABLE_SPELL_FX)
     {PAGE_DISPLAY, ITEM_TOGGLE, "Spell effects", &g_options.spellEffects, NULL},
 #endif
+#if defined(ENABLE_WEATHER)
+    {PAGE_DISPLAY, ITEM_TOGGLE, "Weather", &g_options.weather, NULL},
+#endif
 
     {PAGE_SOUND, ITEM_TOGGLE, "Music", &g_options.music, NULL},
     {PAGE_SOUND, ITEM_VOLUME, "Music volume", NULL, &g_options.musicVolume},

@@ -5,6 +5,7 @@
 #include "vars.h"
 
 #include "ambience.h"
+#include "graphics/weather.h"
 
 #if defined(ENABLE_AMBIENCE)
 
@@ -18,6 +19,7 @@
 //   outdoors or in a town    birdsong by day, crickets at night
 //   by a fireplace in a town the crackle of the hearth
 //   underworld, dungeons     dripping water
+//   in the rain              rain, in place of the sea and the birds
 //
 // Battles have none. The audio driver fades it out when the calls stop (in a
 // conversation, on a full-screen page) and cross-fades between kinds.
@@ -69,10 +71,20 @@ void AMBIENCE_Update(void)
     }
 
     bool day = D_587f >= DAY_START_HOUR && D_587f < NIGHT_START_HOUR;
+#if defined(ENABLE_WEATHER)
+    float rain = WEATHER_RainLevel();
+#else
+    float rain = 0.0f;
+#endif
     if (map != 0 && nearestFire < HEARING)
     {
         kind = AMBIENCE_HEARTH;
         level = 100 - (int)(sqrt((double)nearestFire) * 100 / 7.15);
+    }
+    else if (rain > 0.1f)
+    {
+        kind = AMBIENCE_RAIN;
+        level = (int)(40 + 60 * rain) * (map == 0 ? 100 : 75) / 100;
     }
     else if (map == 0 && water >= SURF_MIN_WATER)
     {

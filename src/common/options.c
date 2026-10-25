@@ -35,6 +35,9 @@ static OptionFlag s_flags[] =
 #if defined(ENABLE_SPELL_FX)
     {"display", "spell_effects", &g_options.spellEffects, true},
 #endif
+#if defined(ENABLE_WEATHER)
+    {"display", "weather", &g_options.weather, true},
+#endif
     {"sound", "music", &g_options.music, true},
     {"sound", "sound_effects", &g_options.soundEffects, true},
     {"sound", "enhanced_sound_effects", &g_options.enhancedSounds, true},

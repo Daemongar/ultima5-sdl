@@ -107,6 +107,14 @@ void AUDIO_SetAmbience(int kind, int level)
     s_sfxOps->SetAmbience(kind, level);
 }
 
+void AUDIO_PlayThunder(int loudness)
+{
+    if (!s_sfxOps || !s_sfxOps->PlayThunder)
+        return;
+
+    s_sfxOps->PlayThunder(loudness);
+}
+
 bool AUDIO_SetAmbientWater(int kind, int closeness)
 {
     if (!s_sfxOps || !s_sfxOps->SetAmbientWater)

@@ -881,14 +881,93 @@ static void AmbienceHearth(float* buf, int count)
     }
 }
 
+// Rain: the hiss of many drops (a bright noise and a softer one under it)
+// and the patter of the nearer ones, short ticks at random.
+static void AmbienceRain(float* buf, int count)
+{
+    Lowpass tick;
+
+    AddNoiseBed(buf, count, 3200.0, 0.55f, true);
+    AddNoiseBed(buf, count, 700.0, 0.6f, false);
+
+    LowpassInit(&tick, 4500.0, 1.4);
+    int drops = (int)(60 * AMBIENCE_LOOP_SEC);
+    for (int d = 0; d < drops; d++)
+    {
+        int start = (int)(Random01() * count);
+        int len = (int)((0.002 + Random01() * 0.004) * SFXSYN_RATE);
+        double amp = 0.03 + Random01() * 0.08;
+
+        for (int i = 0; i < len; i++)
+        {
+            LowpassRun(&tick, White());
+            double env = exp(-5.0 * i / len);
+            buf[(start + i) % count] += (float)(tick.band * env * amp);
+        }
+    }
+}
+
+bool SFXSYN_Thunder(SfxBuffer* out, int loudness)
+{
+    int count = (int)(4.0 * SFXSYN_RATE);
+    Lowpass deep, low, crack;
+    bool close = loudness > 70;
+
+    out->samples = (float*)calloc(count, sizeof(float));
+    if (!out->samples)
+        return false;
+    out->count = count;
+    out->busy = 0;
+
+    // The rumble swells a few times as the sound comes from farther along
+    // the bolt, and dies away.
+    double swells[4], swellAmp[4];
+    for (int s = 0; s < 4; s++)
+    {
+        swells[s] = (close ? 0.05 : 0.15) + s * (0.35 + Random01() * 0.4);
+        swellAmp[s] = (s == 0 ? 1.0 : 0.4 + Random01() * 0.6) * (1.0 - s * 0.15);
+    }
+
+    LowpassInit(&deep, 70.0, 0.9);
+    LowpassInit(&low, 160.0, 0.8);
+    LowpassInit(&crack, 1800.0, 1.0);
+    float peak = 0;
+    for (int i = 0; i < count; i++)
+    {
+        double t = (double)i / SFXSYN_RATE;
+        double env = 0;
+        for (int s = 0; s < 4; s++)
+        {
+            double since = t - swells[s];
+            if (since > 0)
+                env += swellAmp[s] * (since < 0.08 ? since / 0.08 : exp(-(since - 0.08) / 0.7));
+        }
+        float w = White();
+        float v = (float)((LowpassRun(&deep, w) * 1.4 + LowpassRun(&low, w) * 0.6) * env);
+        if (close && t < 0.25)
+            v += (float)(LowpassRun(&crack, w) * exp(-t / 0.05) * 0.6);
+        // The last half second fades out.
+        if (t > 3.5)
+            v *= (float)((4.0 - t) / 0.5);
+        out->samples[i] = v;
+        if (fabsf(v) > peak)
+            peak = fabsf(v);
+    }
+
+    float scale = peak > 0 ? (float)(0.25 + 0.55 * loudness / 100.0) / peak : 0;
+    for (int i = 0; i < count; i++)
+        out->samples[i] *= scale;
+    return true;
+}
+
 bool SFXSYN_Ambience(SfxBuffer* out, int kind)
 {
     // Target loudness (RMS) of each loop before the track's gain.
-    static const float s_levels[] = {0, 0.07f, 0.035f, 0.035f, 0.05f, 0.06f};
+    static const float s_levels[] = {0, 0.07f, 0.035f, 0.035f, 0.05f, 0.06f, 0.06f};
     int count = (int)(AMBIENCE_LOOP_SEC * SFXSYN_RATE);
 
     out->samples = NULL;
-    if (kind <= SFXSYN_AMBIENCE_NONE || kind > SFXSYN_AMBIENCE_HEARTH)
+    if (kind <= SFXSYN_AMBIENCE_NONE || kind > SFXSYN_AMBIENCE_RAIN)
         return false;
 
     out->samples = (float*)calloc(count, sizeof(float));
@@ -904,6 +983,7 @@ bool SFXSYN_Ambience(SfxBuffer* out, int kind)
     case SFXSYN_AMBIENCE_CRICKETS: AmbienceCrickets(out->samples, count); break;
     case SFXSYN_AMBIENCE_DRIPS: AmbienceDrips(out->samples, count); break;
     case SFXSYN_AMBIENCE_HEARTH: AmbienceHearth(out->samples, count); break;
+    case SFXSYN_AMBIENCE_RAIN: AmbienceRain(out->samples, count); break;
     }
 
     double sum = 0;

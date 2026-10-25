@@ -32,7 +32,11 @@ bool SFXSYN_Water(SfxBuffer* out, bool waterfall);
 #define SFXSYN_AMBIENCE_CRICKETS 3
 #define SFXSYN_AMBIENCE_DRIPS 4
 #define SFXSYN_AMBIENCE_HEARTH 5
+#define SFXSYN_AMBIENCE_RAIN 6
 bool SFXSYN_Ambience(SfxBuffer* out, int kind);
+
+// A roll of thunder, loudness 0-100: a crack first when it's close.
+bool SFXSYN_Thunder(SfxBuffer* out, int loudness);
 
 void SFXSYN_Free(SfxBuffer* buffer);
 

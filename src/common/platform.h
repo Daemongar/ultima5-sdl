@@ -224,6 +224,10 @@
 // graphics/spellfx.c).
 //#define ENABLE_SPELL_FX 1
 
+// Weather outdoors and in towns: clouds, rain slanted by the wind, storms
+// with lightning and thunder, morning fog (see graphics/weather.c).
+//#define ENABLE_WEATHER 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -272,6 +276,7 @@
 #define ENABLE_LIGHTING 1
 #define ENABLE_TALK_TOPICS 1
 #define ENABLE_SPELL_FX 1
+#define ENABLE_WEATHER 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

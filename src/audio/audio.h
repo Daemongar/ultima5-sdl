@@ -36,6 +36,7 @@
 #define AMBIENCE_CRICKETS 3
 #define AMBIENCE_DRIPS 4
 #define AMBIENCE_HEARTH 5
+#define AMBIENCE_RAIN 6
 
 extern void AUDIO_Initialize(void);
 extern void AUDIO_Cleanup(void);
@@ -60,5 +61,8 @@ extern bool AUDIO_SetAmbientWater(int kind, int closeness);
 // The background sound of the place the party is in (AMBIENCE_*), called with
 // every map update; level is 0-100. Fades out when the calls stop.
 extern void AUDIO_SetAmbience(int kind, int level);
+
+// A roll of thunder, loudness 0-100.
+extern void AUDIO_PlayThunder(int loudness);
 
 #endif

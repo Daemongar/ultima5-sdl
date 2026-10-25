@@ -8,6 +8,7 @@
 #include "grap_ops.h"
 #include "hover.h"
 #include "lighting.h"
+#include "weather.h"
 #include "spellfx.h"
 #include "topics.h"
 #include "origin.h"
@@ -640,6 +641,18 @@ void GRAP_SDL_FlushFrame(void)
 #endif
         if (LIGHTING_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, slideX, slideY))
             GRAP_BUF_MarkDirty(); // present again to keep the flames flickering
+    }
+#endif
+#if defined(ENABLE_WEATHER)
+    if (IsMapScreen() && g_presentLayout != PRESENT_LAYOUT_CENTERED)
+    {
+#if defined(ENABLE_SMOOTH_SCROLL)
+        int weatherSlideX = s_slideOffsetX, weatherSlideY = s_slideOffsetY;
+#else
+        int weatherSlideX = 0, weatherSlideY = 0;
+#endif
+        if (WEATHER_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, weatherSlideX, weatherSlideY))
+            GRAP_BUF_MarkDirty(); // present again to keep the rain falling
     }
 #endif
 #if defined(ENABLE_SPELL_FX)
