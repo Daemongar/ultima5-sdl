@@ -84,7 +84,8 @@ void AMBIENCE_Update(void)
     else if (rain > 0.1f)
     {
         kind = AMBIENCE_RAIN;
-        level = (int)(40 + 60 * rain) * (map == 0 ? 100 : 75) / 100;
+        // Quieter indoors (WEATHER_RainLevel turns down the rain on a roof).
+        level = (int)(110 * rain) * (map == 0 ? 100 : 85) / 100;
     }
     else if (map == 0 && water >= SURF_MIN_WATER)
     {

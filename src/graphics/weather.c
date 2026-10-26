@@ -1,7 +1,9 @@
 #include "common/common.h"
 #include "common/options.h"
 #include "grap_buf.h"
+#include "funcs.h"
 #include "macros.h"
+#include "tiles.h"
 #include "vars.h"
 
 #include "weather.h"
@@ -10,6 +12,7 @@
 
 #include <SDL3/SDL.h>
 #include <math.h>
+#include <string.h>
 
 #include "audio/audio.h"
 
@@ -127,6 +130,159 @@ static bool Outside(void)
     return map >= 1 && map <= 0x20 && map != 0x19;
 }
 
+// Indoors: a town is cut into spaces by its walls, windows and doors, and by
+// doorways (an opening with a wall either side). A space is outdoors if it
+// reaches the map's edge, or if much of its ground is natural (grass, trees,
+// water: a castle's courtyard); otherwise it's a room or a hall, indoors.
+// A doorway is outdoors when everything beside it is. Worked out for each map
+// and level when the party is first there, while the doors are shut.
+#define TOWN_SIZE 32
+#define NATURAL_SHARE 30 // percent of a walled space's ground for a courtyard
+
+static bool s_outdoors[TOWN_SIZE][TOWN_SIZE];
+static int s_outdoorsMap = -1, s_outdoorsLevel = -1;
+
+static const int s_steps[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+static bool Encloses(int tile)
+{
+    return tile == 0x4a || tile == 0x4b ||        // arrow slit, window
+           (tile >= 0x4d && tile <= 0x57) ||      // walls, crenellations
+           tile == TILE_MAP_SHELF || tile == TILE_MAP_BOOKSHELF || tile == 0x5d ||
+           tile == TILE_MAP_97 || tile == TILE_MAP_98 || // odd doors
+           (tile >= TILE_MAP_DOOR_B8 && tile <= TILE_MAP_DOOR_BB) || tile == TILE_MAP_FIREPLACE;
+}
+
+static bool WallAt(int x, int y)
+{
+    return x >= 0 && y >= 0 && x < TOWN_SIZE && y < TOWN_SIZE && Encloses(*ULTIMA_4402_GetTileAddr(x, y));
+}
+
+// An opening in a wall: walls left and right, or above and below.
+static bool Doorway(int x, int y)
+{
+    return (WallAt(x - 1, y) && WallAt(x + 1, y)) || (WallAt(x, y - 1) && WallAt(x, y + 1));
+}
+
+// Under a roof: walls near in most directions. Catches shops and taverns
+// open to the street through a wide front, which join the street's space.
+#define ROOF_REACH 8
+
+static bool WallWithin(int x, int y, int dx, int dy)
+{
+    for (int i = 1; i <= ROOF_REACH; i++)
+    {
+        if (WallAt(x + dx * i, y + dy * i))
+            return true;
+    }
+    return false;
+}
+
+static bool Roofed(int x, int y)
+{
+    int straight = WallWithin(x, y, 1, 0) + WallWithin(x, y, -1, 0) + WallWithin(x, y, 0, 1) + WallWithin(x, y, 0, -1);
+    int diagonal = WallWithin(x, y, 1, 1) + WallWithin(x, y, -1, 1) + WallWithin(x, y, 1, -1) + WallWithin(x, y, -1, -1);
+    return straight >= 3 && diagonal >= 3;
+}
+
+static void UpdateOutdoors(void)
+{
+    static int s_region[TOWN_SIZE][TOWN_SIZE];
+    static int s_queue[TOWN_SIZE * TOWN_SIZE][2];
+    static bool s_regionOutdoors[TOWN_SIZE * TOWN_SIZE];
+
+    if (D_5893_map_id == s_outdoorsMap && D_5895_map_level == s_outdoorsLevel)
+        return;
+    s_outdoorsMap = D_5893_map_id;
+    s_outdoorsLevel = D_5895_map_level;
+    memset(s_outdoors, 0, sizeof(s_outdoors));
+    if (D_5893_map_id == 0)
+        return;
+
+    // The spaces: squares joined without crossing a wall or a doorway.
+    for (int y = 0; y < TOWN_SIZE; y++)
+        for (int x = 0; x < TOWN_SIZE; x++)
+            s_region[y][x] = WallAt(x, y) || Doorway(x, y) ? -2 : -1;
+
+    int regions = 0;
+    for (int y = 0; y < TOWN_SIZE; y++)
+    {
+        for (int x = 0; x < TOWN_SIZE; x++)
+        {
+            if (s_region[y][x] != -1)
+                continue;
+            int head = 0, tail = 0, squares = 0, natural = 0;
+            bool edge = false;
+            s_region[y][x] = regions;
+            s_queue[tail][0] = x;
+            s_queue[tail][1] = y;
+            tail++;
+            while (head < tail)
+            {
+                int qx = s_queue[head][0], qy = s_queue[head][1];
+                head++;
+                squares++;
+                if (*ULTIMA_4402_GetTileAddr(qx, qy) < 0x40)
+                    natural++; // the outdoor terrain tiles come first
+                if (qx == 0 || qy == 0 || qx == TOWN_SIZE - 1 || qy == TOWN_SIZE - 1)
+                    edge = true;
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = qx + s_steps[d][0], ny = qy + s_steps[d][1];
+                    if (nx < 0 || ny < 0 || nx >= TOWN_SIZE || ny >= TOWN_SIZE || s_region[ny][nx] != -1)
+                        continue;
+                    s_region[ny][nx] = regions;
+                    s_queue[tail][0] = nx;
+                    s_queue[tail][1] = ny;
+                    tail++;
+                }
+            }
+            s_regionOutdoors[regions] = edge || natural * 100 >= squares * NATURAL_SHARE;
+            regions++;
+        }
+    }
+
+    for (int y = 0; y < TOWN_SIZE; y++)
+    {
+        for (int x = 0; x < TOWN_SIZE; x++)
+        {
+            if (s_region[y][x] >= 0)
+            {
+                s_outdoors[y][x] = s_regionOutdoors[s_region[y][x]];
+            }
+            else if (!WallAt(x, y))
+            {
+                // A doorway: outdoors between outdoor spaces (an opening in a
+                // garden wall), not at the way into a room.
+                bool any = false, all = true;
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = x + s_steps[d][0], ny = y + s_steps[d][1];
+                    if (nx < 0 || ny < 0 || nx >= TOWN_SIZE || ny >= TOWN_SIZE || s_region[ny][nx] < 0)
+                        continue;
+                    any = true;
+                    all = all && s_regionOutdoors[s_region[ny][nx]];
+                }
+                s_outdoors[y][x] = any && all;
+            }
+
+            // Natural ground is always under the sky; built floors with
+            // walls close around are under a roof.
+            if (s_outdoors[y][x] && *ULTIMA_4402_GetTileAddr(x, y) >= 0x40 && Roofed(x, y))
+                s_outdoors[y][x] = false;
+        }
+    }
+}
+
+// True if the weather reaches the square (x, y): everywhere outdoors, past
+// a town's edge, and the town's open squares.
+static bool Exposed(int x, int y)
+{
+    if (D_5893_map_id == 0 || x < 0 || y < 0 || x >= TOWN_SIZE || y >= TOWN_SIZE)
+        return true;
+    return s_outdoors[y][x];
+}
+
 static Sky CurrentSky(void)
 {
     // Days since the calendar began: 13 months of 28 days.
@@ -145,7 +301,12 @@ static Sky CurrentSky(void)
 
 float WEATHER_RainLevel(void)
 {
-    return Outside() ? CurrentSky().rain : 0.0f;
+    if (!Outside())
+        return 0.0f;
+    UpdateOutdoors();
+    // Under a roof the rain is only heard on it, muffled.
+    float rain = CurrentSky().rain;
+    return Exposed(D_5896_map_x, D_5897_map_y) ? rain : rain * 0.35f;
 }
 
 // How much daylight there is, so rain and fog darken at night.
@@ -210,7 +371,14 @@ typedef struct Area
     int pitch;
     int left, top, width, height; // the map, frame pixels
     int scale;
+    float worldX, worldY; // the land under the map's top left corner, render pixels
 } Area;
+
+// Whether the weather reaches the land at a render position in the map.
+static bool ExposedAt(Area* a, float x, float y)
+{
+    return Exposed((int)floorf((a->worldX + x) / tilePixelSize), (int)floorf((a->worldY + y) / tilePixelSize));
+}
 
 static void Blend(u32* pixel, float r, float g, float b, float a)
 {
@@ -223,13 +391,15 @@ static void Blend(u32* pixel, float r, float g, float b, float a)
              (u32)SDL_clamp(nb, 0, 255);
 }
 
-// Clouds and fog: shade and haze worked out at block corners from noise
-// fixed to the land (so it moves with the map) and drifting with the wind.
-static void CloudsAndFog(Area* a, Sky sky, float daylight, float flash, double seconds, float windX, float windY,
-                         float worldX, float worldY)
+// Clouds, fog and lightning: shade and haze worked out at block corners
+// from noise fixed to the land (so it moves with the map) and drifting with
+// the wind, and how much of the corner is out under the sky.
+#define CELL 3 // shade, fog, exposure
+
+static void CloudsAndFog(Area* a, Sky sky, float daylight, float flash, double seconds, float windX, float windY)
 {
     int blocksX = a->width / BLOCK + 2, blocksY = a->height / BLOCK + 2;
-    int needed = blocksX * blocksY * 2;
+    int needed = blocksX * blocksY * CELL;
     if (needed > s_gridSize)
     {
         SDL_free(s_grid);
@@ -250,9 +420,10 @@ static void CloudsAndFog(Area* a, Sky sky, float daylight, float flash, double s
         for (int bx = 0; bx < blocksX; bx++)
         {
             // Render pixels on the land.
-            float wx = worldX + (float)(bx * BLOCK) / a->scale;
-            float wy = worldY + (float)(by * BLOCK) / a->scale;
-            float* cell = &s_grid[(by * blocksX + bx) * 2];
+            float x = (float)(bx * BLOCK) / a->scale, y = (float)(by * BLOCK) / a->scale;
+            float wx = a->worldX + x, wy = a->worldY + y;
+            float* cell = &s_grid[(by * blocksX + bx) * CELL];
+            cell[2] = ExposedAt(a, x, y) ? 1.0f : 0.0f;
 
             float n = 0.65f * Noise((wx - cloudX) / 170.0f, (wy - cloudY) / 170.0f, 1) +
                       0.35f * Noise((wx - cloudX) / 70.0f, (wy - cloudY) / 70.0f, 2);
@@ -270,55 +441,57 @@ static void CloudsAndFog(Area* a, Sky sky, float daylight, float flash, double s
     {
         int by = y / BLOCK;
         float fy = (float)(y % BLOCK) / BLOCK;
-        const float* row0 = &s_grid[by * blocksX * 2];
-        const float* row1 = &s_grid[(by + 1) * blocksX * 2];
+        const float* row0 = &s_grid[by * blocksX * CELL];
+        const float* row1 = &s_grid[(by + 1) * blocksX * CELL];
         u32* out = &a->frame[(a->top + y) * a->pitch + a->left];
 
         for (int x = 0; x < a->width; x++)
         {
             int bx = x / BLOCK;
             float fx = (float)(x % BLOCK) / BLOCK;
-            float v[2];
-            for (int k = 0; k < 2; k++)
+            float v[CELL];
+            for (int k = 0; k < CELL; k++)
             {
-                float top = row0[bx * 2 + k] + (row0[(bx + 1) * 2 + k] - row0[bx * 2 + k]) * fx;
-                float bottom = row1[bx * 2 + k] + (row1[(bx + 1) * 2 + k] - row1[bx * 2 + k]) * fx;
+                float top = row0[bx * CELL + k] + (row0[(bx + 1) * CELL + k] - row0[bx * CELL + k]) * fx;
+                float bottom = row1[bx * CELL + k] + (row1[(bx + 1) * CELL + k] - row1[bx * CELL + k]) * fx;
                 v[k] = top + (bottom - top) * fy;
             }
+
+            // Indoors (exposure 0) none of it, but a little of the lightning
+            // through the windows.
+            float exposed = v[2];
+            float shade = 1.0f + (v[0] - 1.0f) * exposed;
+            float fog = v[1] * exposed;
+            float lit = 0.45f * flash * (0.2f + 0.8f * exposed);
 
             u32 p = out[x];
             float r = (float)((p >> 16) & 0xff), g = (float)((p >> 8) & 0xff), b = (float)(p & 0xff);
             // Greyer and darker under cloud, a little blue.
             float l = 0.3f * r + 0.59f * g + 0.11f * b;
-            r = (r + (l - r) * grey) * v[0];
-            g = (g + (l - g) * grey) * v[0];
-            b = (b + (l * 1.08f - b) * grey) * v[0];
+            float greyHere = grey * exposed;
+            r = (r + (l - r) * greyHere) * shade;
+            g = (g + (l - g) * greyHere) * shade;
+            b = (b + (l * 1.08f - b) * greyHere) * shade;
             // Fog: toward a pale grey, as light as the day.
-            r += (fogLight * 205.0f - r) * v[1];
-            g += (fogLight * 210.0f - g) * v[1];
-            b += (fogLight * 218.0f - b) * v[1];
+            r += (fogLight * 205.0f - r) * fog;
+            g += (fogLight * 210.0f - g) * fog;
+            b += (fogLight * 218.0f - b) * fog;
+            // Lightning: toward a blue white.
+            r += (230.0f - r) * lit;
+            g += (237.0f - g) * lit;
+            b += (255.0f - b) * lit;
             out[x] = (p & 0xff000000) | (u32)(SDL_clamp((int)r, 0, 255) << 16) |
                      (u32)(SDL_clamp((int)g, 0, 255) << 8) | (u32)SDL_clamp((int)b, 0, 255);
         }
     }
 }
 
-static void Flash(Area* a, float flash)
-{
-    for (int y = 0; y < a->height; y++)
-    {
-        u32* out = &a->frame[(a->top + y) * a->pitch + a->left];
-        for (int x = 0; x < a->width; x++)
-            Blend(&out[x], 0.9f, 0.93f, 1.0f, 0.45f * flash);
-    }
-}
-
 // A dot of rain: two frame pixels wide, so it survives the picture being
-// scaled down to the window.
+// scaled down to the window. None falls indoors.
 static void Plot(Area* a, float x, float y, float r, float g, float b, float alpha)
 {
     int px = (int)(x * a->scale), py = (int)(y * a->scale);
-    if (px < 0 || py < 0 || px + 1 >= a->width || py >= a->height)
+    if (px < 0 || py < 0 || px + 1 >= a->width || py >= a->height || !ExposedAt(a, x, y))
         return;
     u32* pixel = &a->frame[(a->top + py) * a->pitch + a->left + px];
     Blend(pixel, r, g, b, alpha);
@@ -408,8 +581,9 @@ bool WEATHER_Apply(u32* frame, int pitch, int slideX, int slideY)
     a.width = (MAP_RENDER_RIGHT - MAP_RENDER_LEFT + (wide ? 2 * WIDE_EXTRA_WIDTH : 0)) * a.scale;
     a.height = (MAP_RENDER_BOTTOM - MAP_RENDER_TOP) * a.scale;
     int partyColumn = 5 + (wide ? WIDE_EXTRA_COLUMNS : 0);
-    float worldX = (float)(D_5896_map_x - partyColumn) * tilePixelSize - (float)slideX / a.scale;
-    float worldY = (float)(D_5897_map_y - 5) * tilePixelSize - (float)slideY / a.scale;
+    a.worldX = (float)(D_5896_map_x - partyColumn) * tilePixelSize - (float)slideX / a.scale;
+    a.worldY = (float)(D_5897_map_y - 5) * tilePixelSize - (float)slideY / a.scale;
+    UpdateOutdoors();
 
     // The way the wind blows: North winds blow south, East winds west.
     static const float s_windX[5] = {0, 0, 0, -1, 1};
@@ -417,9 +591,7 @@ bool WEATHER_Apply(u32* frame, int pitch, int slideX, int slideY)
     int wind = D_5892_wind_dir <= 4 ? D_5892_wind_dir : 0;
 
     float daylight = Daylight();
-    CloudsAndFog(&a, sky, daylight, flash, seconds, s_windX[wind], s_windY[wind], worldX, worldY);
-    if (flash > 0.0f)
-        Flash(&a, flash);
+    CloudsAndFog(&a, sky, daylight, flash, seconds, s_windX[wind], s_windY[wind]);
     if (sky.rain > 0.01f)
         Rain(&a, sky, daylight, flash, seconds, s_windX[wind], s_windY[wind]);
     return true;
