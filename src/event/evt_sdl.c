@@ -5,6 +5,7 @@
 #include "event.h"
 #include "hover.h"
 #include "topics.h"
+#include "pointclick.h"
 #include "key/gamepad.h"
 
 #include <SDL3/SDL.h>
@@ -78,6 +79,10 @@ void EVT_PollMessages(void)
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 #if defined(ENABLE_TALK_TOPICS)
 			if (ev.button.button == SDL_BUTTON_LEFT && TOPICS_MouseDown(ev.button.x, ev.button.y))
+				break;
+#endif
+#if defined(ENABLE_POINT_CLICK)
+			if (POINT_MouseDown(ev.button.x, ev.button.y, ev.button.button))
 				break;
 #endif
 #if defined(ENABLE_MOUSE_AIM)

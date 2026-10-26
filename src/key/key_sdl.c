@@ -4,6 +4,7 @@
 #include "options_menu.h"
 #include "playtest.h"
 #include "gamepad.h"
+#include "pointclick.h"
 
 #include <string.h>
 #include "vars.h"
@@ -131,12 +132,28 @@ void KEY_SDL_RequestPadMenu(void)
 {
     s_screenRequested = SCREEN_PAD_KEYS;
 }
+
+// Keys for the game to read one at a time, as if pressed (point and click
+// gives its commands and steps this way).
+void KEY_SDL_QueueKeys(const SDL_Keycode* keys, int count)
+{
+    for (int i = 0; i < count && s_padQueueCount < (int)ARRAYSIZE(s_padQueue); i++)
+    {
+        SDL_KeyboardEvent ev;
+        SDL_zero(ev);
+        ev.key = keys[i];
+        s_padQueue[s_padQueueCount++] = KeyboardEventToUltimaKeycode(ev);
+    }
+}
 #endif
 
 extern void GRAP_SDL_ReloadColorTiles(void);
 
 void KEY_SDL_ProcessKeyDown(SDL_KeyboardEvent ev)
 {
+#if defined(ENABLE_POINT_CLICK)
+    POINT_Cancel();
+#endif
     if (ev.key == SDLK_F1 || ev.key == SDLK_F2 || ev.key == SDLK_F3 || ev.key == SDLK_F4 ||
         ev.key == SDLK_F10)
     {
@@ -259,6 +276,14 @@ int KEY_PollKey(void)
     if (s_lastDownKeycode == 0)
     {
         GAMEPAD_Tick();
+    }
+#endif
+
+#if defined(ENABLE_POINT_CLICK)
+    // A walk's next step.
+    if (s_screenRequested == 0 && s_lastDownKeycode == 0 && s_padQueueCount == 0)
+    {
+        POINT_Tick();
     }
 #endif
 

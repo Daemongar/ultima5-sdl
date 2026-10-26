@@ -232,6 +232,11 @@
 // graphics/glide.c).
 //#define ENABLE_GLIDE 1
 
+// Point and click on the overworld and in towns: click a square to walk
+// there, or one beside the party to talk, attack, open, get or board (see
+// pointclick.c). Needs ENABLE_GAMEPAD's key queue.
+//#define ENABLE_POINT_CLICK 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -282,6 +287,7 @@
 #define ENABLE_SPELL_FX 1
 #define ENABLE_WEATHER 1
 #define ENABLE_GLIDE 1
+#define ENABLE_POINT_CLICK 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

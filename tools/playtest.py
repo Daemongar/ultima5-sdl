@@ -267,6 +267,13 @@ def check_drips(game):
     check(played[:1] == [AMBIENCE_DRIPS], f"expected dripping water in the dungeon, the ambience was {played}")
 
 
+def check_walked_west(game):
+    gam = game.saved()
+    check(game.saved_by_game(), "Quit didn't write SAVED.GAM")
+    check((gam[MAP_X], gam[MAP_Y]) == (92, 106),
+          f"expected a click two squares west to walk the party to 92,106, it is at {gam[MAP_X]},{gam[MAP_Y]}")
+
+
 def check_moved_west(game):
     gam = game.saved()
     check(game.saved_by_game(), "Quit didn't write SAVED.GAM")
@@ -298,6 +305,8 @@ TESTS = [
      setup_coast, START + " wait 2000", check_surf),
     ("ambience_dungeon", "a dungeon plays dripping water",
      setup_dungeon, START + " wait 2000", check_drips),
+    ("click_walk", "a click two squares west walks the party there",
+     setup_coast, START + " click 128 192 wait 2000 q y", check_walked_west),
     ("gamepad_move", "the gamepad's d-pad walks the party",
      setup_coast, START + " pad left wait 500 q y", check_moved_west),
     ("gamepad_quit", "Quit and Yes picked from the gamepad's key menu",

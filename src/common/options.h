@@ -42,6 +42,7 @@ typedef struct Options
     // Gameplay
     bool mouseAim;
     bool dialogImprovements;
+    bool pointClick; // click the map to walk, talk, attack, open, get or board
     bool talkTopics; // list the topics found so far while talking
     bool smarterAi;
     bool partyExp;

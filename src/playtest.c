@@ -18,7 +18,9 @@
 // given to the game the next time it looks for a key (so none are lost while
 // it's busy), or "wait N" to let N milliseconds pass first, or "mouse X Y"
 // to put the mouse pointer at X, Y in the window (for the names under it),
-// or "pad BUTTON" to press and release a gamepad button, given like a key:
+// or "click X Y" to click the left button at X, Y in the game's 640x400
+// picture (the map's squares are 32 pixels, from 16, 16), or "pad BUTTON"
+// to press and release a gamepad button, given like a key:
 //
 //   a-z 0-9    that key
 //   ENTER ESC SPACE BACKSPACE TAB UP DOWN LEFT RIGHT PGUP PGDN F1-F10
@@ -27,6 +29,8 @@
 // When the script runs out the game exits with status 0.
 
 extern void KEY_SDL_ProcessKeyDown(SDL_KeyboardEvent ev);
+extern SDL_FRect g_presentRect;
+extern int g_presentWidth;
 
 #define MAX_TOKENS 4096
 
@@ -35,6 +39,7 @@ enum
     STEP_KEY,
     STEP_WAIT,
     STEP_MOUSE,
+    STEP_CLICK,
     STEP_PAD,
 };
 
@@ -110,7 +115,8 @@ static void LoadScript(const char* path)
     FILE* stream = fopen(path, "r");
     bool waitNext = false;
     bool padNext = false;
-    int mouseArgs = 0; // coordinates still to read for "mouse"
+    int mouseArgs = 0; // coordinates still to read for "mouse" or "click"
+    int mouseKind = STEP_MOUSE;
 
     if (!stream)
         Fail(path, "can't open", path);
@@ -150,7 +156,7 @@ static void LoadScript(const char* path)
                     mouseArgs--;
                     continue;
                 }
-                step->kind = STEP_MOUSE;
+                step->kind = mouseKind;
                 step->mouseY = value;
                 mouseArgs = 0;
             }
@@ -173,9 +179,10 @@ static void LoadScript(const char* path)
                 step->button = s_padNames[i].button;
                 padNext = false;
             }
-            else if (SDL_strcasecmp(token, "mouse") == 0)
+            else if (SDL_strcasecmp(token, "mouse") == 0 || SDL_strcasecmp(token, "click") == 0)
             {
                 mouseArgs = 2;
+                mouseKind = SDL_strcasecmp(token, "click") == 0 ? STEP_CLICK : STEP_MOUSE;
                 continue;
             }
             else if (SDL_strcasecmp(token, "pad") == 0)
@@ -230,6 +237,21 @@ void PLAYTEST_FeedKey(void)
 #if defined(ENABLE_HOVER_NAMES)
             HOVER_MouseMoved(step->mouseX, step->mouseY);
 #endif
+            continue;
+        }
+
+        if (step->kind == STEP_CLICK)
+        {
+            // From the game's picture to the window, then as the mouse would.
+            SDL_Event click;
+            SDL_zero(click);
+            click.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+            click.button.button = SDL_BUTTON_LEFT;
+            click.button.down = true;
+            click.button.clicks = 1;
+            click.button.x = g_presentRect.x + (step->mouseX + 0.5f) * g_presentRect.w / g_presentWidth;
+            click.button.y = g_presentRect.y + (step->mouseY + 0.5f) * g_presentRect.h / 400.0f;
+            SDL_PushEvent(&click);
             continue;
         }
 

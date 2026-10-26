@@ -50,6 +50,9 @@ static OptionFlag s_flags[] =
 #endif
     {"gameplay", "mouse_aim", &g_options.mouseAim, true},
     {"gameplay", "dialog_improvements", &g_options.dialogImprovements, true},
+#if defined(ENABLE_POINT_CLICK)
+    {"gameplay", "point_click", &g_options.pointClick, true},
+#endif
 #if defined(ENABLE_TALK_TOPICS)
     {"gameplay", "talk_topics", &g_options.talkTopics, true},
 #endif

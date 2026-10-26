@@ -15,6 +15,7 @@
 #include "comsubs.h"
 #include "mainout.h"
 #include "outsubs.h"
+#include "pointclick.h"
 #include "save_slots.h"
 
 static void MAINOUT_109e(void);
@@ -673,7 +674,13 @@ static int MAINOUT_0598(void)
 
         if (D_5955 == 0)
         {
+#if defined(ENABLE_POINT_CLICK)
+            POINT_SetAtPrompt(true);
+#endif
             local3_6 = ULTIMA_266c_GetChar();
+#if defined(ENABLE_POINT_CLICK)
+            POINT_SetAtPrompt(false);
+#endif
         }
     }
 

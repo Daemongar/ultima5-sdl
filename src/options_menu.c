@@ -97,6 +97,9 @@ static OptionItem s_items[] =
 
     {PAGE_COMBAT, ITEM_TOGGLE, "Mouse aiming", &g_options.mouseAim, NULL},
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Dialog improvements", &g_options.dialogImprovements, NULL},
+#if defined(ENABLE_POINT_CLICK)
+    {PAGE_GAMEPLAY, ITEM_TOGGLE, "Point and click", &g_options.pointClick, NULL},
+#endif
 #if defined(ENABLE_TALK_TOPICS)
     {PAGE_GAMEPLAY, ITEM_TOGGLE, "Topic list in talk", &g_options.talkTopics, NULL},
 #endif

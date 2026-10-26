@@ -8,6 +8,7 @@
 #include "grap_ops.h"
 #include "hover.h"
 #include "lighting.h"
+#include "pointclick.h"
 #include "glide.h"
 #include "weather.h"
 #include "spellfx.h"
@@ -697,6 +698,9 @@ void GRAP_SDL_FlushFrame(void)
     SDL_RenderTexture(s_sdlRenderer, s_sdlTexture, &srcRect, &dstRect);
 #if defined(ENABLE_HOVER_NAMES)
     HOVER_Draw(s_sdlRenderer);
+#endif
+#if defined(ENABLE_POINT_CLICK)
+    POINT_Draw(s_sdlRenderer);
 #endif
 #if defined(ENABLE_TALK_TOPICS)
     TOPICS_Draw(s_sdlRenderer);
