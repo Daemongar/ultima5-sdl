@@ -283,6 +283,7 @@ exit /b 0</Command>
     <ClCompile Include="..\src\graphics\lighting.c" />
     <ClCompile Include="..\src\graphics\spellfx.c" />
     <ClCompile Include="..\src\graphics\weather.c" />
+    <ClCompile Include="..\src\graphics\glide.c" />
     <ClCompile Include="..\src\graphics\grap_vga.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Strict Debug|Win32'">true</ExcludedFromBuild>
@@ -410,6 +411,7 @@ exit /b 0</Command>
     <ClInclude Include="..\src\graphics\lighting.h" />
     <ClInclude Include="..\src\graphics\spellfx.h" />
     <ClInclude Include="..\src\graphics\weather.h" />
+    <ClInclude Include="..\src\graphics\glide.h" />
     <ClInclude Include="..\src\graphics\grap_ops.h" />
     <ClInclude Include="..\src\graphics\image.h" />
     <ClInclude Include="..\src\graphics\origin.h" />

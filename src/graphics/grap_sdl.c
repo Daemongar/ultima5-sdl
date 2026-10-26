@@ -8,6 +8,7 @@
 #include "grap_ops.h"
 #include "hover.h"
 #include "lighting.h"
+#include "glide.h"
 #include "weather.h"
 #include "spellfx.h"
 #include "topics.h"
@@ -627,6 +628,11 @@ void GRAP_SDL_FlushFrame(void)
 {
     LinearToRGB();
     ComposeFrame();
+#if defined(ENABLE_GLIDE)
+    if (IsMapScreen() && g_presentLayout != PRESENT_LAYOUT_CENTERED &&
+        GLIDE_Apply(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, CurrentPalette()))
+        GRAP_BUF_MarkDirty(); // present again while they glide
+#endif
 #if defined(ENABLE_SMOOTH_SCROLL)
     SmoothScroll(s_sdlSurface->pixels, s_sdlSurface->pitch / 4, s_sdlSurface->h);
 #endif

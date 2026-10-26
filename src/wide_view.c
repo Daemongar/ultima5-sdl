@@ -319,6 +319,18 @@ void WIDE_PutTerrainUnderActor(int x, int y, int actorTile)
     }
 }
 
+void WIDE_TilesUnderActor(int x, int y, int* ground, int* terrain)
+{
+    int tile = D_5893_map_id >= 0x80 ? GetCombatMap(x, y) : TileAt(x - 5, y - 5);
+
+    *ground = *terrain = -1;
+    if (tile < 0)
+        return;
+    *terrain = D_b11e[tile];
+    if (GRAP_BUF_TileHasClearPixels(*terrain))
+        *ground = D_5893_map_id >= 0x80 ? GroundUnder(x, y) : GroundUnder(x - 5, y - 5);
+}
+
 // Before a map tile with see-through pixels is drawn at (x, y) in the 11x11
 // view, draw the ground from its neighbours there (see GroundUnder).
 void WIDE_PutGroundUnderTerrain(int x, int y, int mapTile)

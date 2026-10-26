@@ -228,6 +228,10 @@
 // with lightning and thunder, morning fog (see graphics/weather.c).
 //#define ENABLE_WEATHER 1
 
+// People and monsters glide from square to square instead of jumping (see
+// graphics/glide.c).
+//#define ENABLE_GLIDE 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -277,6 +281,7 @@
 #define ENABLE_TALK_TOPICS 1
 #define ENABLE_SPELL_FX 1
 #define ENABLE_WEATHER 1
+#define ENABLE_GLIDE 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

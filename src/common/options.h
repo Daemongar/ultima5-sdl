@@ -28,6 +28,7 @@ typedef struct Options
     bool lighting; // dusk, night and the glow of fires and lamps on the map
     bool spellEffects; // spells sparkle, burst and glow instead of inverting the map
     bool weather; // clouds, rain, storms and fog outdoors
+    bool glide; // people and monsters glide from square to square
 
     // Sound
     bool music;
