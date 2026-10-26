@@ -2,6 +2,7 @@
 #include "common/options.h"
 #include "funcs.h"
 #include "vars.h"
+#include "keybind.h"
 #include "macros.h"
 
 #include <string.h>
@@ -256,6 +257,9 @@ static int DUNGEON_03d6(void)
     ULTIMA_4c2a();
 
     local_4 = 1;
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_SetContext(KEYBIND_COMMAND);
+#endif
     do
     {
         local_6 = ULTIMA_2032_ToUpper(ULTIMA_1b38_PollKeyWithCursor());
@@ -284,6 +288,9 @@ static int DUNGEON_03d6(void)
             DUNGEON_1020();
         }
     } while (local_6 == 0);
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_SetContext(KEYBIND_NONE);
+#endif
 
     return local_6;
 }

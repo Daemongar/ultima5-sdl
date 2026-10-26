@@ -167,6 +167,9 @@
     <ClCompile Include="..\src\pointclick.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\keybind.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\town.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -494,6 +497,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\pointclick.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\keybind.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\zstats.h">

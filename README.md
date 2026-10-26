@@ -83,7 +83,9 @@ The game data can't be included in the repository, so the tests run on your own 
 
 ### Settings
 
-Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound, Gameplay and Combat pages, and Esc saves and returns. Display and sound changes apply immediately.
+Choose **Options** on the title menu, or press **F1** during play, to change settings: arrow keys choose and change, Tab switches between the Display, Sound, Gameplay (the "Game" tab), Combat and Keys pages, and Esc saves and returns. Display and sound changes apply immediately.
+
+The **Keys** page rebinds the moves, Pass and every command: choose one, press Enter, then the new key (a key already in use swaps with it); Delete puts an action's own key back, and "Reset all keys" restores them all. The new keys work wherever the game asks for a command or a direction, in towns, outdoors, dungeons and battles; typing a name, a conversation word or a spell is never remapped, and the arrow keys always move unless bound to something else. The bindings are kept in the `[keys]` section of ultima5.ini (`attack=A`, `north=Up`), and the F2 page lists the commands with their keys as bound.
 
 Press **F2** during play for a page listing the game's keyboard shortcuts; any key returns to the game. Press **F3** for the spells and their reagents, one circle per page (arrow keys turn the page). Two recipes, In Xen Mani and Rel Xen Bet, show `???`: they are learned from people in the game.
 

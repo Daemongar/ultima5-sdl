@@ -16,6 +16,7 @@
 #include "mainout.h"
 #include "outsubs.h"
 #include "pointclick.h"
+#include "keybind.h"
 #include "save_slots.h"
 
 static void MAINOUT_109e(void);
@@ -677,7 +678,13 @@ static int MAINOUT_0598(void)
 #if defined(ENABLE_POINT_CLICK)
             POINT_SetAtPrompt(true);
 #endif
+#if defined(ENABLE_KEYBIND)
+            KEYBIND_SetContext(KEYBIND_COMMAND);
+#endif
             local3_6 = ULTIMA_266c_GetChar();
+#if defined(ENABLE_KEYBIND)
+            KEYBIND_SetContext(KEYBIND_NONE);
+#endif
 #if defined(ENABLE_POINT_CLICK)
             POINT_SetAtPrompt(false);
 #endif

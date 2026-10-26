@@ -5,6 +5,7 @@
 #include "vars.h"
 
 #include "options_menu.h"
+#include "keybind.h"
 #include "automap.h"
 #include "journal.h"
 #include "map_name.h"
@@ -31,6 +32,8 @@ enum
     ITEM_TOGGLE,
     ITEM_VOLUME,
     ITEM_WINDOW_MODE,
+    ITEM_KEY,        // a rebindable key (Keys page)
+    ITEM_RESET_KEYS, // every key back to its own
 };
 
 enum
@@ -39,6 +42,9 @@ enum
     PAGE_SOUND,
     PAGE_GAMEPLAY,
     PAGE_COMBAT,
+#if defined(ENABLE_KEYBIND)
+    PAGE_KEYS,
+#endif
     PAGE_COUNT,
 };
 
@@ -49,6 +55,7 @@ typedef struct OptionItem
     char* label;
     bool* flag;  // ITEM_TOGGLE
     int* value;  // ITEM_VOLUME, ITEM_WINDOW_MODE
+    int action;  // ITEM_KEY: the KEYBIND action
 } OptionItem;
 
 // Settings shown on the screen. Others (such as bard_mana_roundup) can only be
@@ -128,7 +135,12 @@ static OptionItem s_items[] =
 #endif
 };
 
+#if defined(ENABLE_KEYBIND)
+// Five tabs only fit across the screen with "Gameplay" shortened.
+static char* s_pageNames[PAGE_COUNT] = {"Display", "Sound", "Game", "Combat", "Keys"};
+#else
 static char* s_pageNames[PAGE_COUNT] = {"Display", "Sound", "Gameplay", "Combat"};
+#endif
 static char* s_windowModeNames[] = {"Fullscreen", "Bordered", "Windowed"};
 
 #define SCREEN_RIGHT 0x27
@@ -179,12 +191,40 @@ static void ValueText(OptionItem* item, char* out)
     case ITEM_WINDOW_MODE:
         strcpy(out, s_windowModeNames[*item->value]);
         break;
+
+#if defined(ENABLE_KEYBIND)
+    case ITEM_KEY:
+        strcpy(out, KEYBIND_KeyName(item->action));
+        break;
+#endif
+
+    default:
+        out[0] = '\0';
+        break;
     }
 }
+
+#if defined(ENABLE_KEYBIND)
+// The Keys page: an item for each action, then Reset all.
+static OptionItem s_keyItems[64];
+#endif
 
 static int PageItems(int page, OptionItem** items)
 {
     int count = 0;
+#if defined(ENABLE_KEYBIND)
+    if (page == PAGE_KEYS)
+    {
+        for (int i = 0; i < KEYBIND_Count() && i < (int)ARRAYSIZE(s_keyItems) - 1; i++)
+        {
+            s_keyItems[i] = (OptionItem){PAGE_KEYS, ITEM_KEY, (char*)KEYBIND_Label(i), NULL, NULL, i};
+            items[count++] = &s_keyItems[i];
+        }
+        s_keyItems[count] = (OptionItem){PAGE_KEYS, ITEM_RESET_KEYS, "Reset all keys", NULL, NULL, 0};
+        items[count] = &s_keyItems[count];
+        return count + 1;
+    }
+#endif
     for (int i = 0; i < ARRAYSIZE(s_items); i++)
     {
         if (s_items[i].page == page)
@@ -213,13 +253,25 @@ static void DrawStatic(void)
     ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
     DrawFrame();
     PrintCentered(1, "Options");
-    PrintCentered(SCREEN_BOTTOM - 1, "Arrows: change  Tab: page  Esc: done");
+}
+
+// The keys for the page, at the bottom.
+static void DrawHelp(int page)
+{
+    char* help = "Arrows: change  Tab: page  Esc: done";
+#if defined(ENABLE_KEYBIND)
+    if (page == PAGE_KEYS)
+        help = "Enter: set  Del: reset  Esc: done";
+#endif
+    ULTIMA_1bf2_SetTextPosition(1, SCREEN_BOTTOM - 1);
+    PrintPadded("", SCREEN_RIGHT - 1);
+    PrintCentered(SCREEN_BOTTOM - 1, help);
 }
 
 // The page names in a row, centered, one space between them.
 static void DrawTabs(int page)
 {
-    int width = PAGE_COUNT - 1;
+    int width = 0;
     for (int p = 0; p < PAGE_COUNT; p++)
         width += (int)strlen(s_pageNames[p]) + 2;
 
@@ -234,7 +286,7 @@ static void DrawTabs(int page)
         ULTIMA_16ba_PrintChar(0x20);
         if (p == page)
             ULTIMA_16ba_PrintChar(CTRL_CHAR_TOGGLE_INVERSION);
-        x += (int)strlen(s_pageNames[p]) + 3;
+        x += (int)strlen(s_pageNames[p]) + 2;
     }
 }
 
@@ -258,13 +310,21 @@ static void DrawItemRow(OptionItem* item, int row, bool selected)
     PrintPadded(text, VALUE_WIDTH);
 }
 
+// The first item shown: pages longer than the screen scroll.
+static int s_top;
+
 static void DrawItems(OptionItem** items, int count, int selected)
 {
+    if (selected < s_top)
+        s_top = selected;
+    if (selected >= s_top + MAX_PAGE_ITEMS)
+        s_top = selected - MAX_PAGE_ITEMS + 1;
+
     for (int row = 0; row < MAX_PAGE_ITEMS; row++)
     {
-        if (row < count)
+        if (s_top + row < count)
         {
-            DrawItemRow(items[row], row, row == selected);
+            DrawItemRow(items[s_top + row], row, s_top + row == selected);
         }
         else
         {
@@ -336,7 +396,9 @@ void OPTIONS_MENU_Run(void)
 
     DrawStatic();
     int count = PageItems(page, items);
+    s_top = 0;
     DrawTabs(page);
+    DrawHelp(page);
     DrawItems(items, count, selected);
 
     for (;;)
@@ -344,30 +406,65 @@ void OPTIONS_MENU_Run(void)
         int previous = selected;
         int key = ReadKey();
 
+        (void)previous;
+#if defined(ENABLE_KEYBIND)
+        // On the Keys page: Enter (or Right, or Space) takes the next key
+        // pressed for the action; Delete or Backspace puts its own back.
+        if (items[selected]->kind == ITEM_KEY || items[selected]->kind == ITEM_RESET_KEYS)
+        {
+            OptionItem* item = items[selected];
+            if (key == U5_KEY_ENTER || key == U5_KEY_RIGHT || key == U5_KEY_SPACE)
+            {
+                if (item->kind == ITEM_RESET_KEYS)
+                {
+                    KEYBIND_ResetAll();
+                }
+                else
+                {
+                    ULTIMA_1bf2_SetTextPosition(VALUE_COLUMN, FIRST_ITEM_ROW + selected - s_top);
+                    PrintPadded("Press key", VALUE_WIDTH);
+                    int pressed = ReadKey();
+                    u16 code = (u16)(pressed | (D_538a ? 0x100 : 0));
+                    if (pressed != U5_KEY_ESC)
+                        KEYBIND_Bind(item->action, code);
+                }
+                DrawItems(items, count, selected);
+                continue;
+            }
+            if (key == U5_KEY_BACKSPACE || key == 0x7f)
+            {
+                if (item->kind == ITEM_KEY)
+                    KEYBIND_Reset(item->action);
+                DrawItems(items, count, selected);
+                continue;
+            }
+            if (key == U5_KEY_LEFT)
+                continue;
+        }
+#endif
+
         switch (key)
         {
         case U5_KEY_UP:
             selected = (selected + count - 1) % count;
-            DrawItemRow(items[previous], previous, false);
-            DrawItemRow(items[selected], selected, true);
+            DrawItems(items, count, selected);
             break;
 
         case U5_KEY_DOWN:
             selected = (selected + 1) % count;
-            DrawItemRow(items[previous], previous, false);
-            DrawItemRow(items[selected], selected, true);
+            DrawItems(items, count, selected);
             break;
 
         case U5_KEY_LEFT:
             ChangeItem(items[selected], -1);
-            DrawItemRow(items[selected], selected, true);
+            DrawItems(items, count, selected);
             break;
 
         case U5_KEY_RIGHT:
         case U5_KEY_ENTER:
         case U5_KEY_SPACE:
             ChangeItem(items[selected], 1);
-            DrawItemRow(items[selected], selected, true);
+            DrawItems(items, count, selected);
             break;
 
         case '\t':
@@ -375,8 +472,10 @@ void OPTIONS_MENU_Run(void)
         case U5_KEY_PGUP:
             page = (page + (key == U5_KEY_PGUP ? PAGE_COUNT - 1 : 1)) % PAGE_COUNT;
             selected = 0;
+            s_top = 0;
             count = PageItems(page, items);
             DrawTabs(page);
+            DrawHelp(page);
             DrawItems(items, count, selected);
             break;
 
@@ -461,7 +560,26 @@ static void ShowShortcuts(void)
     ULTIMA_16ba_PrintChar(CTRL_CHAR_CLEAR_WINDOW);
     DrawFrame();
     PrintCentered(1, "Keyboard Shortcuts");
+#if defined(ENABLE_KEYBIND)
+    // The commands with their keys as bound: the letters' actions, A-M down
+    // the left and N-Z down the right, as in s_commandKeys.
+    {
+        static char text[ARRAYSIZE(s_commandKeys)][24];
+        static char* entries[ARRAYSIZE(s_commandKeys)];
+        int first = KEYBIND_Count() - (int)ARRAYSIZE(s_commandKeys);
+        int half = (int)ARRAYSIZE(s_commandKeys) / 2;
+        for (int i = 0; i < (int)ARRAYSIZE(s_commandKeys); i++)
+        {
+            int action = first + (i % 2 == 0 ? i / 2 : half + i / 2);
+            snprintf(text[i], sizeof(text[i]), "%s %s", KEYBIND_KeyName(action), KEYBIND_Label(action));
+            text[i][17] = '\0';
+            entries[i] = text[i];
+        }
+        PrintTwoColumns(entries, ARRAYSIZE(s_commandKeys), 2);
+    }
+#else
     PrintTwoColumns(s_commandKeys, ARRAYSIZE(s_commandKeys), 2);
+#endif
     PrintTwoColumns(s_otherKeys, ARRAYSIZE(s_otherKeys), 14);
     PrintCentered(SCREEN_BOTTOM - 1, "Any key: done");
 

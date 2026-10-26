@@ -274,6 +274,13 @@ def check_walked_west(game):
           f"expected a click two squares west to walk the party to 92,106, it is at {gam[MAP_X]},{gam[MAP_Y]}")
 
 
+def setup_west_on_w(game):
+    # Move west rebound to W ([keys] in ultima5.ini).
+    setup_coast(game)
+    ini = game.folder / "ultima5.ini"
+    ini.write_text(ini.read_text() + "[keys]\nwest=W\n")
+
+
 def check_moved_west(game):
     gam = game.saved()
     check(game.saved_by_game(), "Quit didn't write SAVED.GAM")
@@ -307,6 +314,8 @@ TESTS = [
      setup_dungeon, START + " wait 2000", check_drips),
     ("click_walk", "a click two squares west walks the party there",
      setup_coast, START + " click 128 192 wait 2000 q y", check_walked_west),
+    ("rebound_key", "W, bound to Move west, walks the party west",
+     setup_west_on_w, START + " w wait 500 q y", check_moved_west),
     ("gamepad_move", "the gamepad's d-pad walks the party",
      setup_coast, START + " pad left wait 500 q y", check_moved_west),
     ("gamepad_quit", "Quit and Yes picked from the gamepad's key menu",

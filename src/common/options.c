@@ -1,6 +1,7 @@
 #include "common.h"
 #include "config.h"
 #include "options.h"
+#include "keybind.h"
 
 #include <string.h>
 
@@ -117,10 +118,16 @@ void OPTIONS_Load(void)
 
     g_options.musicVolume = ClampVolume(CONFIG_GetInt("sound", "music_volume", 8));
     g_options.soundVolume = ClampVolume(CONFIG_GetInt("sound", "sound_volume", 8));
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_Load();
+#endif
 }
 
 void OPTIONS_Save(void)
 {
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_Save();
+#endif
     CONFIG_SetString("window", "mode", (char*)s_windowModeNames[g_options.windowMode]);
     CONFIG_SetInt("sound", "music_volume", g_options.musicVolume);
     CONFIG_SetInt("sound", "sound_volume", g_options.soundVolume);

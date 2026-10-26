@@ -13,6 +13,7 @@
 #include "cast2.h"
 #include "npc.h"
 #include "pointclick.h"
+#include "keybind.h"
 #include "save_slots.h"
 #include "talk.h"
 #include "town.h"
@@ -885,7 +886,13 @@ static uint TOWN_0dc4(int param_1)
 #if defined(ENABLE_POINT_CLICK)
     POINT_SetAtPrompt(true);
 #endif
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_SetContext(KEYBIND_COMMAND);
+#endif
     local_4 = ULTIMA_266c_GetChar();
+#if defined(ENABLE_KEYBIND)
+    KEYBIND_SetContext(KEYBIND_NONE);
+#endif
 #if defined(ENABLE_POINT_CLICK)
     POINT_SetAtPrompt(false);
 #endif

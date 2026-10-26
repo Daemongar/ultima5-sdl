@@ -237,6 +237,10 @@
 // pointclick.c). Needs ENABLE_GAMEPAD's key queue.
 //#define ENABLE_POINT_CLICK 1
 
+// Rebindable keys for the commands and the moves: the Options screen's Keys
+// page, [keys] in ultima5.ini (see keybind.c).
+//#define ENABLE_KEYBIND 1
+
 #if defined(TARGET_DOS16)
 #define MATCHING_BUILD 1
 #else
@@ -288,6 +292,7 @@
 #define ENABLE_WEATHER 1
 #define ENABLE_GLIDE 1
 #define ENABLE_POINT_CLICK 1
+#define ENABLE_KEYBIND 1
 //#define ENABLE_TRANSLATION 1
 #endif
 

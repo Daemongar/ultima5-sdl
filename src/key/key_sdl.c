@@ -5,6 +5,7 @@
 #include "playtest.h"
 #include "gamepad.h"
 #include "pointclick.h"
+#include "keybind.h"
 
 #include <string.h>
 #include "vars.h"
@@ -259,6 +260,7 @@ extern void EVT_Yield(void);
 int KEY_PollKey(void)
 {
 	int ret;
+    bool queued = false;
 
 	D_538a = 0;
 
@@ -268,6 +270,7 @@ int KEY_PollKey(void)
     // The next key picked from the gamepad's key menu.
     if (s_screenRequested == 0 && s_lastDownKeycode == 0 && s_padQueueCount > 0)
     {
+        queued = true;
         s_lastDownKeycode = s_padQueue[0];
         memmove(s_padQueue, s_padQueue + 1, --s_padQueueCount * sizeof(s_padQueue[0]));
     }
@@ -324,6 +327,12 @@ int KEY_PollKey(void)
 #endif
         return 0;
     }
+
+#if defined(ENABLE_KEYBIND)
+    // Rebound keys (the queue's are the game's own already).
+    if (s_lastDownKeycode != 0 && !queued && !OPTIONS_MENU_IsOpen())
+        s_lastDownKeycode = KEYBIND_Translate(s_lastDownKeycode);
+#endif
 
     // special keystroke
     if (s_lastDownKeycode & 0x100)

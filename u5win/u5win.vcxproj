@@ -330,6 +330,7 @@ exit /b 0</Command>
     <ClCompile Include="..\src\talk.c" />
     <ClCompile Include="..\src\topics.c" />
     <ClCompile Include="..\src\pointclick.c" />
+    <ClCompile Include="..\src\keybind.c" />
     <ClCompile Include="..\src\time\pctimer.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Strict Debug|Win32'">true</ExcludedFromBuild>
@@ -435,6 +436,7 @@ exit /b 0</Command>
     <ClInclude Include="..\src\talk.h" />
     <ClInclude Include="..\src\topics.h" />
     <ClInclude Include="..\src\pointclick.h" />
+    <ClInclude Include="..\src\keybind.h" />
     <ClInclude Include="..\src\tiles.h" />
     <ClInclude Include="..\src\time\pctimer.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

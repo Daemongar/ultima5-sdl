@@ -1,6 +1,7 @@
 #include "common/common.h"
 #include "common/options.h"
 #include "vars.h"
+#include "keybind.h"
 #include "funcs.h"
 #include "macros.h"
 #include "tiles.h"
@@ -468,7 +469,13 @@ static void COMBAT_063e_ProcessCommand(void)
                     }
                     else
                     {
+#if defined(ENABLE_KEYBIND)
+                        KEYBIND_SetContext(KEYBIND_COMMAND);
+#endif
                         local_8 = ULTIMA_266c_GetChar();
+#if defined(ENABLE_KEYBIND)
+                        KEYBIND_SetContext(KEYBIND_NONE);
+#endif
                         local_6 = 1;
                         local_4 = 0;
 

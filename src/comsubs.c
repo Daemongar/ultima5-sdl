@@ -9,6 +9,7 @@
 #include "cast2.h"
 #include "combat.h"
 #include "comsubs.h"
+#include "keybind.h"
 #include "graphics/spellfx.h"
 #include "sjog.h"
 
@@ -391,7 +392,14 @@ int COMSUBS_0504(int param_1, int param_2)
 
         ULTIMA_5910_UpdateFrame();
 
-        switch (ULTIMA_266c_GetChar())
+#if defined(ENABLE_KEYBIND)
+        KEYBIND_SetContext(KEYBIND_DIRECTION);
+#endif
+        int aimKey = ULTIMA_266c_GetChar();
+#if defined(ENABLE_KEYBIND)
+        KEYBIND_SetContext(KEYBIND_NONE);
+#endif
+        switch (aimKey)
         {
         case U5_KEY_HOME: // 05c2
             local_10 = -1;
